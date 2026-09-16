@@ -1,6 +1,6 @@
 # 🌐 Web-B
 
-UMC EWHA 11th PE Web B 레포지토리입니다.
+UMC EWHA 11th PE Web B 프론트엔드 레포지토리입니다.
 
 ## 🙌 Our Crew
 
