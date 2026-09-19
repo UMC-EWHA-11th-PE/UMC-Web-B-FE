@@ -93,15 +93,13 @@ reviews:
   auto_review:
     # PR 생성 시 자동으로 리뷰 시작
     enabled: true
+    # 리뷰 대상 base 브랜치
+    base_branches:
+      - ".*"
     # 기존 PR에 새 커밋이 추가될 경우 증분(Incremental) 변경분만 다시 리뷰
     auto_incremental_review: true
     # 드래프트(Draft) 상태의 PR도 리뷰할지 여부
     drafts: false
-    # 리뷰를 수행할 대상 베이스 브랜치 (지정하지 않으면 모든 브랜치 대상)
-    base_branches:
-      - "main"
-      - "develop"
-      - "feat/**"
     # PR 제목에 특정 키워드가 포함되어 있으면 리뷰 생략
     ignore_title_keywords:
       - "[Deploy]"
