@@ -93,6 +93,9 @@ reviews:
   auto_review:
     # PR 생성 시 자동으로 리뷰 시작
     enabled: true
+    # 리뷰 대상 base 브랜치
+    base_branches:
+      - ".*"
     # 기존 PR에 새 커밋이 추가될 경우 증분(Incremental) 변경분만 다시 리뷰
     auto_incremental_review: true
     # 드래프트(Draft) 상태의 PR도 리뷰할지 여부
