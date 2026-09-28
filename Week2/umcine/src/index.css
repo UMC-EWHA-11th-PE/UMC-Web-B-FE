@@ -1,3 +1,6 @@
+@import "tailwindcss";
+
+
 :root {
   font-family: Arial, "Noto Sans KR", sans-serif;
   color: #20242c;
