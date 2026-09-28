@@ -1,0 +1,25 @@
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+
+  min-height: 72px;
+  padding: 0 64px;
+
+  border-top: 1px solid #e5e7eb;
+  background-color: #ffffff;
+}
+
+.tmdb-attribution {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.tmdb-attribution img {
+  width: 28px;
+  height: auto;
+}
