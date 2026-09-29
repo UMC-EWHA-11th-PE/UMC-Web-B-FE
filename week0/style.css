@@ -1,0 +1,39 @@
+h1 {
+        color: #2563eb;
+        font-size: 32px;
+        font-weight: 700;
+    }
+    .description{
+        color:#475569;
+    }
+    #page-title { /* 고유한 아이디를 가진 요소 선택 */
+        letter-spacing: -0.02em; 
+    }
+    .card {
+        width: 90%;
+        max-width: 560px;
+        padding: 24px;/*콘텐츠와 테두리 사이의 안쪽 여백*/
+        border: 1px solid #e2e8f0;/*요소의 테두리*/
+        border-radius: 16px; /*테두리의 모서리 둥글게 표현*/
+        margin: 16px auto; /*요소 바깥쪽 여백*/
+        box-sizing: border-box; /*지정한 너비에 padding과 border 포함*/
+    }
+
+    .skills {
+        display: flex; /*자식 요소를 한 방향으로 정렬*/
+        gap: 30px; /*자식 요소 사이의 간격*/
+        height: 50px;
+        border: 1px solid black;
+        justify-content: left; /*주축 방향 정렬*/
+        align-items: center; /*교차축 방향 center 정렬*/
+        flex-wrap: wrap; /*공간이 부족할 때 다음줄로 줄바꿈*/
+    } 
+
+    button {
+        background: #2563eb;
+        color: #ffffff;
+    }
+    
+    button:hover {  /*.은 class 선택자, :은 가상 클래스(button이 hover 상태일때)*/
+        background: #d81d2d;
+    }
