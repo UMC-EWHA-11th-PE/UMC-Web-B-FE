@@ -1,58 +1,41 @@
-interface MovieCardProps {
-  title: string;
-  releaseDate: string;
-  isBookmarked: boolean;
-}
-
-function Header() {
-  return <h1>나만의 Movie 모음집</h1>;
-}
-
-function MovieList() {
-  return (
-    <div>
-    <br />
-      <MovieCard
-        title="너를 만난 여름"
-        releaseDate="2023.06.28"
-        isBookmarked={true}
-      />
-    <br />
-
-      <MovieCard
-        title="인턴"
-        releaseDate="2015.09.24"
-        isBookmarked={false}
-      />
-    <br />
-      <MovieCard
-        title="해리포터"
-        releaseDate="2001.12.14"
-        isBookmarked={true}
-      />
-    </div>
-  );
-}
-
-function MovieCard({
-  title,
-  releaseDate,
-  isBookmarked,
-}: MovieCardProps) {
-  return (
-    <main>
-      <h2>{title}</h2>
-      <p>{releaseDate}</p>
-      <p>{isBookmarked ? "북마크됨" : "북마크 안 됨"}</p>
-    </main>
-  );
-}
+import { useState } from "react";
+import Header from "./components/header";
+import MovieGrid from "./components/movie-grid";
+import Pagination from "./components/pagination";
+import { movies as initialMovies } from "./data/movies";
+import type { Movie } from "./types/movie";
+import "./App.css";
 
 export default function App() {
+  const [movies, setMovies] = useState<Movie[]>(initialMovies);
+
+  function handleToggleBookmark(movieId: number) {
+    setMovies((currentMovies) =>
+      currentMovies.map((movie) =>
+        movie.id === movieId
+          ? {
+              ...movie,
+              isBookmarked: !movie.isBookmarked,
+            }
+          : movie,
+      ),
+    );
+  }
+
   return (
-    <main>
-      <Header/>
-      <MovieList />
-    </main>
+    <>
+      <Header />
+
+      <main className="main">
+        <h1 className="page-title">영화 목록</h1>
+
+        <MovieGrid
+          movies={movies}
+          onToggleBookmark={handleToggleBookmark}
+        />
+
+        <Pagination />
+      </main>
+    </>
   );
 }
