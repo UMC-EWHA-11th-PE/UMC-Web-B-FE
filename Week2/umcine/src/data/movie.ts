@@ -132,3 +132,4 @@ export const movies: Movie[] = [
     isBookmarked: false,
   },
 ];
+
