@@ -1,0 +1,16 @@
+:root {
+  font-family: Arial, "Noto Sans KR", sans-serif;
+  color: #20242c;
+  background: #f8fafc;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* { box-sizing: border-box; }
+body { min-width: 320px; margin: 0; }
+button, input, textarea { font: inherit; }
+#root { width: 100%; min-height: 100vh; }
+
+html {
+  scrollbar-gutter: stable;
+}
