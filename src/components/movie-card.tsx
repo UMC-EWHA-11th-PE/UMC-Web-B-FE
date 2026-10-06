@@ -6,7 +6,7 @@ interface MovieCardProps {
   movie: Movie;
   onBookmarkToggle: (id: number) => void;
 }
-
+ 
 function MovieCard({ movie, onBookmarkToggle }: MovieCardProps) {
   return (
     <div className="relative overflow-hidden">
