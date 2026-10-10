@@ -1,22 +1,19 @@
 import { Link, useParams } from "@tanstack/react-router";
 import { movies } from "../../data/movies";
+import { BookmarkButton } from "../../components/bookmark-button";
 
 export function MovieDetailPage() {
   const { movieId } = useParams({
     from: "/movies/$movieId",
   });
 
-  // URL의 movieId와 같은 영화 찾기
-  const movie = movies.find(
-    (item) => item.id === Number(movieId),
-  );
+  // URL의 movieId와 같은 영화 찾기s
+  const movie = movies.find((item) => item.id === Number(movieId));
 
   if (!movie) {
     return (
       <main className="flex min-h-[calc(100vh-72px)] items-center justify-center">
-        <p className="text-lg font-semibold">
-          영화를 찾을 수 없어요.
-        </p>
+        <p className="text-lg font-semibold">영화를 찾을 수 없어요.</p>
       </main>
     );
   }
@@ -36,21 +33,14 @@ export function MovieDetailPage() {
         <div className="absolute inset-0 bg-black/50" />
 
         <div className="relative mx-auto flex h-full max-w-6xl flex-col justify-between px-6 py-8 text-white">
-          <Link
-            to="/"
-            className="w-fit text-sm font-medium text-white"
-          >
+          <Link to="/" className="w-fit text-sm font-medium text-white">
             ← 영화 목록
           </Link>
 
           <div>
-            <h1 className="text-4xl font-bold">
-              {movie.title}
-            </h1>
+            <h1 className="text-4xl font-bold">{movie.title}</h1>
 
-            <p className="mt-3 text-sm text-gray-200">
-              {movie.originalTitle}
-            </p>
+            <p className="mt-3 text-sm text-gray-200">{movie.originalTitle}</p>
 
             <p className="mt-2 text-sm text-gray-200">
               {movie.releaseDate}
@@ -77,16 +67,12 @@ export function MovieDetailPage() {
               {movie.tagline}
             </h2>
 
-            <p className="mt-5 leading-7 text-gray-600">
-              {movie.overview}
-            </p>
+            <p className="mt-5 leading-7 text-gray-600">{movie.overview}</p>
 
-            <button
-              type="button"
-              className="mt-6 cursor-pointer rounded-md bg-blue-600 px-5 py-3 text-sm font-semibold text-white"
-            >
-              ♡ 즐겨찾기
-            </button>
+            {/* 기존 즐겨찾기 버튼 위치에 Zustand 북마크 버튼 연결 */}
+            <div className="mt-6">
+              <BookmarkButton movieId={movie.id} />
+            </div>
           </div>
         </div>
       </section>
