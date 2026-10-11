@@ -6,16 +6,19 @@ import { cn } from '../../utils/cn';
 function SearchForm({ query }: { query: string }) {
   const [searchText, setSearchText] = useState(query);
   const navigate = useNavigate({from: '/search'});
+  
   function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     void navigate({search: searchText.trim() ? {query: searchText.trim()} : {}});
   }
+
   return <form onSubmit={handleSubmit} className="flex h-11 items-center gap-3 rounded-lg border border-slate-300 bg-white px-3 shadow-sm focus-within:ring-2 focus-within:ring-blue-500">
     <img src="/icons/search.svg" alt="" className="size-[17px]" />
     <input type="search" aria-label="검색어" placeholder="영화 제목을 검색해 보세요" value={searchText} onChange={event => setSearchText(event.target.value)} className="min-w-0 flex-1 bg-transparent text-sm outline-none" />
     <button type="submit" className="cursor-pointer rounded bg-[#20242c] px-3 py-2 text-xs font-bold text-white">검색</button>
   </form>;
 }
+
 export function SearchPage() {
   const { query = '' } = useSearch({from: '/search'});
   const normalizedQuery = query.trim().toLowerCase();
