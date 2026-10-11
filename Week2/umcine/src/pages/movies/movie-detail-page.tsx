@@ -2,22 +2,23 @@ import { Link, useParams } from '@tanstack/react-router';
 import { useState } from 'react';
 import {cn} from "../../utils/cn";
 import { movies } from '../../data/movie';
+import { useBookmarkStore } from '../../stores/bookmark-store';
 
 export function MovieDetailPage() {
   const { movieId } = useParams({from: '/movies/$movieId'});
-
-  const [bookmarkOverrides, setBookmarkOverrides] = useState<
-    Record<number, boolean>
-    >({});
 
   const [reviews, setReviews] = useState<
     Record<number, { rating: number; text: string; saved: boolean }>
     >({});
 
   const movie = movies.find(item => String(item.id) === movieId);
+  
+  //북마크
+  const isBookmarked= useBookmarkStore((state)=> movie? state.bookmarkedMovieIds.includes(movie.id): false);
+  const toggleBookmark= useBookmarkStore((state)=> state.toggleBookmark);
+  
   if (!movie) return <main className="mx-auto w-full max-w-[1320px] flex-1 px-5 py-20"><h1 className="mb-4 text-2xl font-bold">영화를 찾을 수 없어요.</h1><Link to="/" className="text-blue-600 underline">영화 목록으로 돌아가기</Link></main>;
   
-  const isBookmarked=bookmarkOverrides[movie.id]??movie.isBookmarked;
   const review=reviews[movie.id]??{
     rating:0, text:"", saved:false,
   };
@@ -90,12 +91,10 @@ export function MovieDetailPage() {
       <button
         type="button"
         aria-pressed={isBookmarked}
-        onClick={() =>
-          setBookmarkOverrides((current) => ({
-            ...current,
-            [movie.id]: !isBookmarked,
-          }))
-        }
+        onClick={(event) => {
+          event.stopPropagation();
+          toggleBookmark(movie.id);
+        }}
         className={cn(
           "cursor-pointer rounded-md px-3 py-2 text-[13px] font-bold text-white",
           isBookmarked ? "bg-slate-700" : "bg-blue-600",
