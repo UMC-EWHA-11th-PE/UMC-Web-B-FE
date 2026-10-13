@@ -1,11 +1,17 @@
-import { Link, useNavigate, useSearch } from "@tanstack/react-router";
+import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
 import { movies } from "../../data/movies";
+import { useBookmarkStore } from "../../stores/bookmark-store";
+import MovieGrid from "../../components/movies/movie-grid";
 
 export function SearchPage() {
   const { query } = useSearch({ from: "/search" });
   const navigate = useNavigate({ from: "/search" });
   const [searchText, setSearchText] = useState(query ?? "");
+  const bookmarkedMovieIds = useBookmarkStore(
+    (state) => state.bookmarkedMovieIds,
+  );
+  const toggleBookmark = useBookmarkStore((state) => state.toggleBookmark);
 
   useEffect(() => {
     setSearchText(query ?? "");
@@ -19,6 +25,11 @@ export function SearchPage() {
           movie.originalTitle.toLowerCase().includes(normalizedQuery),
       )
     : [];
+
+  const resultMovies = searchResults.map((movie) => ({
+    ...movie,
+    isBookmarked: bookmarkedMovieIds.includes(movie.id),
+  }));
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -51,34 +62,16 @@ export function SearchPage() {
       ) : (
         <>
           <h2 className="mb-1 text-lg font-bold">'{query}' 검색 결과</h2>
-          <p className="mb-5 text-sm text-gray-500">영화 {searchResults.length}편</p>
+          <p className="mb-5 text-sm text-gray-500">
+            영화 {searchResults.length}편
+          </p>
           {searchResults.length === 0 ? (
             <p className="text-gray-500">검색 결과가 없어요.</p>
           ) : (
-            <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-              {searchResults.map((movie) => (
-                <li key={movie.id} className="rounded-lg border border-gray-200 p-3">
-                  <img
-                    src={movie.posterPath}
-                    alt={`${movie.title} 포스터`}
-                    className="mb-2 aspect-[2/3] w-full rounded-md object-cover"
-                  />
-                  <h3 className="text-sm font-semibold">{movie.title}</h3>
-                  <p className="text-xs text-gray-500">{movie.originalTitle}</p>
-                  <p className="text-xs text-gray-500">{movie.releaseDate}</p>
-                  <p className="mt-1 line-clamp-2 text-xs text-gray-600">
-                    {movie.overview}
-                  </p>
-                  <Link
-                    to="/movies/$movieId"
-                    params={{ movieId: String(movie.id) }}
-                    className="mt-2 inline-block text-xs font-semibold text-blue-600"
-                  >
-                    상세 보기
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <MovieGrid
+              movies={resultMovies}
+              onToggleBookmark={toggleBookmark}
+            />
           )}
         </>
       )}
