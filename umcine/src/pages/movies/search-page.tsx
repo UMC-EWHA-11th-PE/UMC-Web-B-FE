@@ -1,8 +1,10 @@
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
-import { movies } from "../../data/movies";
-import { useBookmarkStore } from "../../stores/bookmark-store";
+import { toMovie } from "../../api/movies/mappers";
+import type { TmdbMovieListItem } from "../../api/movies/models";
+import { searchMovies } from "../../api/movies/search-movies";
 import MovieGrid from "../../components/movies/movie-grid";
+import { useBookmarkStore } from "../../stores/bookmark-store";
 
 export function SearchPage() {
   const { query } = useSearch({ from: "/search" });
@@ -13,23 +15,42 @@ export function SearchPage() {
   );
   const toggleBookmark = useBookmarkStore((state) => state.toggleBookmark);
 
-  useEffect(() => {
-    setSearchText(query ?? "");
-  }, [query]);
+  const [tmdbMovies, setTmdbMovies] = useState<TmdbMovieListItem[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const normalizedQuery = query?.trim().toLowerCase() ?? "";
-  const searchResults = normalizedQuery
-    ? movies.filter(
-        (movie) =>
-          movie.title.toLowerCase().includes(normalizedQuery) ||
-          movie.originalTitle.toLowerCase().includes(normalizedQuery),
+  const normalizedQuery = query?.trim() ?? "";
+
+  useEffect(() => {
+    if (!normalizedQuery) return;
+
+    let ignore = false;
+
+    async function loadSearchResults() {
+      setIsLoading(true);
+      setErrorMessage(null);
+
+      try {
+        const response = await searchMovies({ query: normalizedQuery });
+        if (!ignore) setTmdbMovies(response.results);
+      } catch {
+        if (!ignore) setErrorMessage("검색 결과를 불러오지 못했어요.");
+      } finally {
+        if (!ignore) setIsLoading(false);
+      }
+    }
+
+    loadSearchResults();
+    return () => {
+      ignore = true;
+    };
+  }, [normalizedQuery]);
+
+  const resultMovies = normalizedQuery
+    ? tmdbMovies.map((movie) =>
+        toMovie(movie, bookmarkedMovieIds.includes(movie.id)),
       )
     : [];
-
-  const resultMovies = searchResults.map((movie) => ({
-    ...movie,
-    isBookmarked: bookmarkedMovieIds.includes(movie.id),
-  }));
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -59,13 +80,19 @@ export function SearchPage() {
 
       {!normalizedQuery ? (
         <p className="text-gray-500">검색어를 입력해 주세요.</p>
+      ) : isLoading ? (
+        <p className="text-gray-500">검색 중...</p>
+      ) : errorMessage ? (
+        <p role="alert" className="text-red-600">
+          {errorMessage}
+        </p>
       ) : (
         <>
           <h2 className="mb-1 text-lg font-bold">'{query}' 검색 결과</h2>
           <p className="mb-5 text-sm text-gray-500">
-            영화 {searchResults.length}편
+            영화 {resultMovies.length}편
           </p>
-          {searchResults.length === 0 ? (
+          {resultMovies.length === 0 ? (
             <p className="text-gray-500">검색 결과가 없어요.</p>
           ) : (
             <MovieGrid
