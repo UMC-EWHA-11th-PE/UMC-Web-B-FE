@@ -105,7 +105,7 @@ function SearchPageContent({query}:{query:string}){
         영화 검색
       </h1>
 
-      <SearchForm key={query} query={query} />
+      <SearchForm  query={query} />
 
       {!normalizedQuery ? (
         <p className="mt-6 text-center text-sm text-slate-500">
