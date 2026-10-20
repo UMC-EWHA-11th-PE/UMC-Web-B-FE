@@ -135,6 +135,9 @@ export function MovieDetailPage() {
       <div className="absolute inset-0 bg-linear-to-r from-black/70 via-black/40 to-black/10" />
       <div className="relative mx-auto flex h-full max-w-[1320px] flex-col justify-between px-5 py-5">
         <Link to="/" className="w-fit text-[13px] font-bold hover:underline">〈 영화 목록</Link>
+        <h1 className="mb-2 text-[27px] font-extrabold leading-tight sm:text-4xl">
+          {movie.title}
+        </h1>
         <p className="mb-2 text-[13px]">{movie.original_title}</p>
 
         <p className="text-[13px]">
