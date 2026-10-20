@@ -46,25 +46,26 @@ function SearchForm({ query }: { query: string }) {
 
 export function SearchPage() {
   const { query = '' } = useSearch({ from: '/search' });
+
+  return <SearchPageContent key={query} query={query} />;
+}
+
+function SearchPageContent({query}:{query:string}){
+
   const normalizedQuery = query.trim();
 
   const [movies, setMovies] = useState<TmdbMovieListItem[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(Boolean(normalizedQuery));
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    let ignore = false;
     const normalizedQuery = query.trim();
 
-    setMovies([]);
-    setErrorMessage(null);
-
     if (!normalizedQuery) {
-      setIsLoading(false);
       return;
     }
 
-    setIsLoading(true);
+    let ignore = false;
 
     searchMovies({ query: normalizedQuery })
       .then(response => {
