@@ -33,10 +33,7 @@ export function MovieCard({ movie }: MovieCardProps) {
       </Link>
       <button type="button" 
       aria-label={movie.title + ' 즐겨찾기 ' + (isBookmarked ? '해제' : '추가')} aria-pressed={isBookmarked} 
-      onClick={(event) => {
-        event.stopPropagation();
-        toggleBookmark(movie.id);
-      }} 
+      onClick={() => toggleBookmark(movie.id)}
       className={cn('absolute right-[9px] top-[9px] grid h-[38px] w-[34px] cursor-pointer place-items-center rounded-lg border border-white bg-[#20242c]', 
       isBookmarked && 'border-blue-600 bg-blue-600')}>
         <img src={isBookmarked ? '/icons/bookmark.svg' : '/icons/bookmark-outline.svg'} alt="" className="size-[22px] invert" />

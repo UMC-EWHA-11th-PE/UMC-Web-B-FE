@@ -183,10 +183,7 @@ export function MovieDetailPage() {
       <button
         type="button"
         aria-pressed={isBookmarked}
-        onClick={(event) => {
-          event.stopPropagation();
-          toggleBookmark(movie.id);
-        }}
+        onClick={() => toggleBookmark(movie.id)}
         className={cn(
           "cursor-pointer rounded-md px-3 py-2 text-[13px] font-bold text-white",
           isBookmarked ? "bg-slate-700" : "bg-blue-600",
