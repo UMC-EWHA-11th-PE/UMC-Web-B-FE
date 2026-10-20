@@ -13,7 +13,7 @@ export function Pagination({
   onPageChange,
   showSinglePage = false,
 }: PaginationProps) {
-  if (totalPages <= 1 ||(totalPages===1 && !showSinglePage)) {
+  if (totalPages < 1 || (totalPages === 1 && !showSinglePage)) {
     return null;
   }
 
