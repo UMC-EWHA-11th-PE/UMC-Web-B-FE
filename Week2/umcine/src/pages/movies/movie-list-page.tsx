@@ -55,6 +55,7 @@ export function MovieListPage() {
         <p>조건에 맞는 영화가 없어요</p>
       ) :(
         <>
+          <MovieGrid movies={movies} />
           {totalPages > 1 && (
             <Pagination
               currentPage={currentPage}
