@@ -26,7 +26,7 @@ async function getMoviesWithFetch(
     });
 
     if(!response.ok){
-        throw new Error('영화 목록 요청에 실패했어요.: ${response.status}');
+        throw new Error(`영화 목록 요청에 실패했어요: ${response.status}`);
     }   
 
     return response.json();
