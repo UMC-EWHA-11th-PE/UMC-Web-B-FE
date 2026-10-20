@@ -1,17 +1,69 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { MovieGrid } from '../../components/movies/movie-grid';
 import { Pagination } from '../../components/movies/pagination';
-import { movies } from '../../data/movie';
-
-const PAGE_SIZE = 10;
+import { getMovies } from '../../api/movies/get-movies';
+import type { TmdbMovieListItem } from '../../api/movies/models';
 
 export function MovieListPage() {
   const [currentPage, setCurrentPage] = useState(1);
-  
-  return <main className="mx-auto w-full max-w-[1320px] flex-1 px-4 pb-20 pt-[26px] sm:px-5">
-    <h1 className="mb-[18px] text-3xl font-extrabold">영화 목록</h1>
-    <MovieGrid movies={movies.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)}  />
-    <Pagination currentPage={currentPage} totalPages={Math.ceil(movies.length / PAGE_SIZE)} onPageChange={setCurrentPage} />
-  </main>;
-}
+  const [movies, setMovies] = useState<TmdbMovieListItem[]>([]);
+  const [totalPages, setTotalPages] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadMovies() {
+      setIsLoading(true);
+      setErrorMessage(null);
+
+      try {
+        const response = await getMovies({ page: currentPage });
+
+        if (!ignore) {
+          setMovies(response.results);
+          setTotalPages(response.total_pages);
+        }
+      } catch {
+        if (!ignore) {
+          setErrorMessage('영화 목록을 불러오지 못했어요.');
+        }
+      } finally {
+        if (!ignore) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    loadMovies();
+
+    return () => {
+      ignore = true;
+    };
+  }, [currentPage]);
+
+  return (
+    <main className="mx-auto w-full max-w-[1320px] flex-1 px-4 pb-20 pt-[26px] sm:px-5">
+      <h1 className="mb-[18px] text-3xl font-extrabold">영화 목록</h1>
+
+      {isLoading ? (
+        <p role="status">영화 목록을 불러오는 중이에요.</p>
+      ) : errorMessage ? (
+        <p role="alert">{errorMessage}</p>
+      ) : movies.length===0?(
+        <p>조건에 맞는 영화가 없어요</p>
+      ) :(
+        <>
+          {totalPages > 1 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          )}
+        </>
+      )}
+    </main>
+  );
+}
