@@ -10,6 +10,7 @@ export function MovieListPage() {
   const [totalPages, setTotalPages] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0); // 다시시도를 위한 재요청 상태
 
   useEffect(() => {
     let ignore = false;
@@ -41,7 +42,7 @@ export function MovieListPage() {
     return () => {
       ignore = true;
     };
-  }, [currentPage]);
+  }, [currentPage, retryCount]);
 
   return (
     <main className="mx-auto w-full max-w-[1320px] flex-1 px-4 pb-20 pt-[26px] sm:px-5">
@@ -52,6 +53,11 @@ export function MovieListPage() {
       ) : errorMessage ? (
         <p role="alert" className="text-red-600">
           {errorMessage}
+          <button type ="button" 
+           onClick={()=> setRetryCount((count)=> count+1)}
+            className="mt-3 rounded bg-blue-600 px-4 py-2 text-sm text-white">
+              다시 시도
+            </button>
         </p>
       ) : movies.length === 0 ? (
         <p role="status">표시할 영화가 없어요.</p>
