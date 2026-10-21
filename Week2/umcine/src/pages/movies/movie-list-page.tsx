@@ -50,10 +50,12 @@ export function MovieListPage() {
       {isLoading ? (
         <p role="status">영화 목록을 불러오는 중이에요.</p>
       ) : errorMessage ? (
-        <p role="alert">{errorMessage}</p>
-      ) : movies.length===0?(
-        <p>조건에 맞는 영화가 없어요</p>
-      ) :(
+        <p role="alert" className="text-red-600">
+          {errorMessage}
+        </p>
+      ) : movies.length === 0 ? (
+        <p role="status">표시할 영화가 없어요.</p>
+      ) : (
         <>
           <MovieGrid movies={movies} />
           {totalPages > 1 && (
