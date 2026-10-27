@@ -1,13 +1,17 @@
+
 import type { Movie } from "../types/movie";
 import { Link } from "@tanstack/react-router";
 import { cn } from "../utils/cn";
+import { getTmdbPosterUrl } from "../utils/movies/tmdb-image";
 
 interface MovieCardProps {
   movie: Movie;
   onBookmarkToggle: (id: number) => void;
 }
- 
+
 function MovieCard({ movie, onBookmarkToggle }: MovieCardProps) {
+  const posterUrl = getTmdbPosterUrl(movie.posterPath);
+
   return (
     <div className="relative overflow-hidden">
       <div className="movie-poster">
@@ -15,19 +19,29 @@ function MovieCard({ movie, onBookmarkToggle }: MovieCardProps) {
           to="/movies/$movieId"
           params={{ movieId: String(movie.id) }}
         >
-          <img
-            className="block w-full aspect-[2/3] object-cover rounded-[8px]"
-            src={movie.posterPath}
-            alt={movie.title}
-          />
+          {posterUrl ? (
+            <img
+              className="block w-full aspect-[2/3] object-cover rounded-[8px]"
+              src={posterUrl}
+              alt={movie.title}
+            />
+          ) : (
+            <div className="flex w-full aspect-[2/3] items-center justify-center rounded-[8px] bg-gray-200 text-gray-500">
+              포스터 없음
+            </div>
+          )}
         </Link>
 
         <button
+          type="button"
           className={cn(
             "absolute right-2 top-2 rounded-full p-2 text-white",
             movie.isBookmarked ? "bg-blue-600" : "bg-black/60",
           )}
           onClick={() => onBookmarkToggle(movie.id)}
+          aria-label={
+            movie.isBookmarked ? "북마크 해제" : "북마크 추가"
+          }
         >
           <img
             src={
@@ -35,7 +49,7 @@ function MovieCard({ movie, onBookmarkToggle }: MovieCardProps) {
                 ? "/icons/movie-icons/bookmark.svg"
                 : "/icons/movie-icons/bookmark-outline.svg"
             }
-            alt="북마크"
+            alt=""
           />
         </button>
       </div>

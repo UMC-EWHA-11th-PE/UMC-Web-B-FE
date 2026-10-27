@@ -1,6 +1,9 @@
+
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useState, type SubmitEvent } from "react";
-import { movies } from "../../data/movies";
+import { searchMovies } from "../../api/movies/search-movies";
+import type { Movie } from "../../types/movie";
+import { getTmdbPosterUrl } from "../../utils/movies/tmdb-image";
 import { useBookmarkStore } from "../../utils/bookmark-storage";
 
 export function SearchPage() {
@@ -8,28 +11,82 @@ export function SearchPage() {
   const navigate = useNavigate({ from: "/search" });
 
   const [searchText, setSearchText] = useState(query ?? "");
+  const [movies, setMovies] = useState<Movie[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const bookmarkedMovieIds = useBookmarkStore(
-    (state) => state.bookmarkedMovieIds
+    (state) => state.bookmarkedMovieIds,
   );
 
   const toggleBookmark = useBookmarkStore(
-    (state) => state.toggleBookmark
+    (state) => state.toggleBookmark,
   );
 
   useEffect(() => {
     setSearchText(query ?? "");
   }, [query]);
 
-  const normalizedQuery = query?.trim().toLowerCase() ?? "";
+  const normalizedQuery = query?.trim() ?? "";
 
-  const searchResults = normalizedQuery
-    ? movies.filter(
-        (movie) =>
-          movie.title.toLowerCase().includes(normalizedQuery) ||
-          movie.originalTitle.toLowerCase().includes(normalizedQuery),
-      )
-    : [];
+  useEffect(() => {
+    let ignore = false;
+
+    setMovies([]);
+    setErrorMessage(null);
+
+    if (!normalizedQuery) {
+      setIsLoading(false);
+      return () => {
+        ignore = true;
+      };
+    }
+
+    async function loadSearchResults() {
+      setIsLoading(true);
+
+      try {
+        const response = await searchMovies({
+          query: normalizedQuery,
+          page: 1,
+        });
+
+        const mappedMovies: Movie[] = response.results.map((movie) => ({
+          id: movie.id,
+          title: movie.title,
+          originalTitle: movie.original_title,
+          releaseDate: movie.release_date,
+          posterPath: movie.poster_path ?? "",
+          backdropPath: movie.backdrop_path ?? "",
+          genres: [],
+          runtime: "",
+          tagline: "",
+          overview: movie.overview,
+          isBookmarked: false,
+        }));
+
+        if (!ignore) {
+          setMovies(mappedMovies);
+        }
+      } catch (error) {
+        console.error(error);
+
+        if (!ignore) {
+          setErrorMessage("검색 결과를 불러오지 못했어요.");
+        }
+      } finally {
+        if (!ignore) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    loadSearchResults();
+
+    return () => {
+      ignore = true;
+    };
+  }, [normalizedQuery]);
 
   function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -92,20 +149,30 @@ export function SearchPage() {
         {normalizedQuery && (
           <section className="search-results">
             <div className="search-result-header">
-              <h2>‘{query}’ 검색 결과</h2>
-              <p>영화 {searchResults.length}편</p>
+              <h2>‘{normalizedQuery}’ 검색 결과</h2>
+              {!isLoading && !errorMessage && (
+                <p>영화 {movies.length}편</p>
+              )}
             </div>
 
-            {searchResults.length === 0 ? (
+            {isLoading ? (
+              <p>검색 결과를 불러오는 중이에요...</p>
+            ) : errorMessage ? (
+              <div className="no-search-result">
+                <p>{errorMessage}</p>
+              </div>
+            ) : movies.length === 0 ? (
               <div className="no-search-result">
                 <p>검색 결과가 없어요.</p>
               </div>
             ) : (
               <ul className="search-result-list">
-                {searchResults.map((movie) => {
+                {movies.map((movie) => {
                   const isBookmarked = bookmarkedMovieIds.includes(
-                    movie.id
+                    movie.id,
                   );
+
+                  const posterUrl = getTmdbPosterUrl(movie.posterPath);
 
                   return (
                     <li
@@ -113,11 +180,21 @@ export function SearchPage() {
                       className="search-result-item"
                     >
                       <div className="search-result-poster-wrapper">
-                        <img
-                          src={movie.posterPath}
-                          alt={`${movie.title} 포스터`}
-                          className="search-result-poster"
-                        />
+                        {posterUrl ? (
+                          <img
+                            src={posterUrl}
+                            alt={`${movie.title} 포스터`}
+                            className="search-result-poster"
+                          />
+                        ) : (
+                          <div
+                            className="search-result-poster"
+                            role="img"
+                            aria-label={`${movie.title} 포스터 없음`}
+                          >
+                            이미지 없음
+                          </div>
+                        )}
 
                         <button
                           type="button"
@@ -159,9 +236,7 @@ export function SearchPage() {
 
                         <Link
                           to="/movies/$movieId"
-                          params={{
-                            movieId: String(movie.id),
-                          }}
+                          params={{ movieId: String(movie.id) }}
                           className="detail-link"
                         >
                           상세 보기 →
