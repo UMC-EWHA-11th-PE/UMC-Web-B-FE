@@ -1,8 +1,8 @@
 import { Link, useNavigate, useSearch } from '@tanstack/react-router';
-import { useEffect, useState, type SubmitEvent } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useState, type SubmitEvent } from 'react';
 import { cn } from '../../utils/cn';
 import { searchMovies } from '../../api/movies/search-movies';
-import type { TmdbMovieListItem } from '../../api/movies/models';
 
 function SearchForm({ query }: { query: string }) {
   const [searchText, setSearchText] = useState(query);
@@ -45,49 +45,16 @@ function SearchForm({ query }: { query: string }) {
 }
 
 export function SearchPage() {
-  const { query = '' } = useSearch({ from: '/search' });
+  const { query } = useSearch({ from: '/search' });
+  const normalizedQuery = query?.trim() ?? '';
 
-  return <SearchPageContent key={query} query={query} />;
-}
+  const searchQuery = useQuery({
+    queryKey: ['movies', 'search', { query: normalizedQuery }],
+    queryFn: () => searchMovies({ query: normalizedQuery }),
+    enabled: normalizedQuery.length > 0,
+  });
 
-function SearchPageContent({query}:{query:string}){
-
-  const normalizedQuery = query.trim();
-
-  const [movies, setMovies] = useState<TmdbMovieListItem[]>([]);
-  const [isLoading, setIsLoading] = useState(Boolean(normalizedQuery));
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  useEffect(() => {
-    const normalizedQuery = query.trim();
-
-    if (!normalizedQuery) {
-      return;
-    }
-
-    let ignore = false;
-
-    searchMovies({ query: normalizedQuery })
-      .then(response => {
-        if (!ignore) {
-          setMovies(response.results);
-        }
-      })
-      .catch(() => {
-        if (!ignore) {
-          setErrorMessage('검색 결과를 불러오지 못했어요.');
-        }
-      })
-      .finally(() => {
-        if (!ignore) {
-          setIsLoading(false);
-        }
-      });
-
-    return () => {
-      ignore = true;
-    };
-  }, [query]);
+  const searchResults = searchQuery.data?.results ?? [];
 
   return (
     <main
@@ -105,7 +72,7 @@ function SearchPageContent({query}:{query:string}){
         영화 검색
       </h1>
 
-      <SearchForm  query={query} />
+      <SearchForm key={query ?? ''} query={query ?? ''} />
 
       {!normalizedQuery ? (
         <p className="mt-6 text-center text-sm text-slate-500">
@@ -118,34 +85,34 @@ function SearchPageContent({query}:{query:string}){
               ‘{normalizedQuery}’ 검색 결과
             </h2>
 
-            {!isLoading && !errorMessage && (
+            {searchQuery.isSuccess && (
               <p className="shrink-0 text-xs text-slate-500">
-                불러온 영화 {movies.length}편
+                불러온 영화 {searchResults.length}편
               </p>
             )}
           </div>
 
-          {isLoading ? (
+          {searchQuery.isLoading ? (
             <p
               role="status"
               className="py-16 text-center text-slate-500"
             >
               영화 목록을 불러오는 중이에요.
             </p>
-          ) : errorMessage ? (
+          ) : searchQuery.isError ? (
             <p
               role="alert"
               className="py-16 text-center text-red-600"
             >
-              {errorMessage}
+              검색 결과를 불러오지 못했어요.
             </p>
-          ) : movies.length === 0 ? (
+          ) : searchQuery.isSuccess && searchResults.length === 0 ? (
             <p className="py-16 text-center text-slate-500">
               조건에 맞는 영화가 없어요.
             </p>
           ) : (
             <ul className="grid gap-x-7 min-[701px]:grid-cols-2">
-              {movies.map(movie => (
+              {searchResults.map(movie => (
                 <li
                   key={movie.id}
                   className="flex min-w-0 gap-4 border-b border-slate-200 py-4"
