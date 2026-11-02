@@ -2,6 +2,7 @@
 
 import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { Header } from "../components/layout/header";
+import { Footer } from "../components/layout/footer";
 
 export const Route = createRootRoute({
   component: () => (
@@ -9,9 +10,11 @@ export const Route = createRootRoute({
       {/* Header는 모든 페이지에서 항상 표시 */}
       <Header />
       {/* 현재 URL에 맞는 페이지가 표시되는 자리 */}
-      <Outlet /> /
+      <Outlet />
+      {/* Footer는 모든 페이지의 하단에 표시 */}
+      <Footer />
     </>
-  ), 
+  ),
   //존재하지 않는 URL에 접근하면 보이는 페이지
   notFoundComponent: () => <main>페이지를 찾을 수 없어요.</main>,
 });
