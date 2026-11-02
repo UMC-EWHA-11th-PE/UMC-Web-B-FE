@@ -1,28 +1,25 @@
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
-import { useEffect, useState, type SubmitEvent } from "react";
+import { useState, type SubmitEvent } from "react";
 import { movies } from "../../data/movies";
+import { BookmarkButton } from "../../components/bookmark-button";
 
 export function SearchPage() {
   const { query } = useSearch({ from: "/search" });
   const navigate = useNavigate({ from: "/search" });
   const [searchText, setSearchText] = useState(query ?? "");
 
-  useEffect(() => {
-    setSearchText(query ?? "");
-  }, [query]);
-
   //검색할 때는 trim()으로 앞뒤 공백 없앰 + toLowerCase()로 영어를 소문자 맞춤
   const normalizedQuery = query?.trim().toLowerCase() ?? "";
   const searchResults = normalizedQuery
-  //movies.filter로 조건에 맞는 영화만 남김
-    ? movies.filter(
+    ? //movies.filter로 조건에 맞는 영화만 남김
+      movies.filter(
         (movie) =>
           movie.title.toLowerCase().includes(normalizedQuery) ||
           movie.originalTitle.toLowerCase().includes(normalizedQuery),
       )
     : [];
 
-  //검색 버튼 누르면 
+  //검색 버튼 누르면
   function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     //event.preventDefault()로 페이지를 새로고침하는 행동을 막음
     event.preventDefault();
@@ -33,7 +30,7 @@ export function SearchPage() {
     });
   }
 
- return (
+  return (
     <main className="min-h-[calc(100vh-72px)] bg-gray-50 px-6 py-20">
       <div className="mx-auto max-w-3xl">
         <h1 className="mb-8 text-center text-3xl font-bold text-gray-900">
@@ -44,11 +41,7 @@ export function SearchPage() {
           onSubmit={handleSubmit}
           className="flex items-center gap-3 rounded-xl border border-gray-400 bg-white p-3 shadow-lg"
         >
-          <img
-            src="/icons/search.svg"
-            alt=""
-            className="h-5 w-5"
-          />
+          <img src="/icons/search.svg" alt="" className="h-5 w-5" />
 
           <input
             aria-label="검색어"
@@ -81,9 +74,7 @@ export function SearchPage() {
             </p>
 
             {searchResults.length === 0 ? (
-              <p className="mt-8 text-gray-500">
-                검색 결과가 없어요.
-              </p>
+              <p className="mt-8 text-gray-500">검색 결과가 없어요.</p>
             ) : (
               <ul className="mt-8 grid gap-6 sm:grid-cols-2">
                 {searchResults.map((movie) => (
@@ -123,6 +114,11 @@ export function SearchPage() {
                       >
                         상세 보기
                       </Link>
+
+                      {/* 검색 결과에서도 같은 Zustand 북마크 상태 사용 */}
+                      <div className="mt-3">
+                        <BookmarkButton movieId={movie.id} />
+                      </div>
                     </div>
                   </li>
                 ))}
