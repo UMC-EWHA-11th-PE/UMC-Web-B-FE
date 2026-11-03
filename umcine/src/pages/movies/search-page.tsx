@@ -2,8 +2,8 @@ import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useState, type SubmitEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 
-// 기존 직접 작성한 movies 배열 대신 TMDB 검색 API 사용
-import { searchMovies } from "../../api/movies/search-movies";
+// 공통으로 정의한 영화 Query 설정 가져오기
+import { movieQueries } from "../../api/movies/movie-queries";
 
 // TMDB 포스터 경로를 실제 이미지 URL로 변환
 import { getTmdbPosterUrl } from "../../utils/movies/tmdb-image";
@@ -28,17 +28,8 @@ export function SearchPage() {
   // 이제 검색은 TMDB 서버가 처리하므로 소문자로 변환할 필요 없음
   const normalizedQuery = query?.trim() ?? "";
 
-  // TanStack Query로 검색 결과 요청 및 상태 관리
-  const searchQuery = useQuery({
-    // 검색어별로 데이터를 구분해서 캐시에 저장
-    queryKey: ["movies", "search", { query: normalizedQuery }],
-
-    // TMDB API에서 검색 결과 가져오기
-    queryFn: () => searchMovies({ query: normalizedQuery }),
-
-    // 검색어가 있을 때만 API 요청
-    enabled: normalizedQuery.length > 0,
-  });
+  // 공통 Query 설정을 사용해 검색 결과 요청 및 상태 관리
+  const searchQuery = useQuery(movieQueries.search(normalizedQuery));
 
   // API 응답에서 영화 목록 추출 (데이터가 없으면 빈 배열)
   const movies = searchQuery.data?.results ?? [];

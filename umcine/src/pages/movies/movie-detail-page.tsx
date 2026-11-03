@@ -2,8 +2,8 @@ import { Link, useParams } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { getMovieDetailErrorMessage } from "../../utils/movies/get-movie-detail-error-message";
 
-// TMDB API에서 영화 상세 정보를 가져오는 함수
-import { getMovieDetail } from "../../api/movies/get-movie-detail";
+// 공통으로 정의한 영화 Query 설정 가져오기
+import { movieQueries } from "../../api/movies/movie-queries";
 
 // TMDB 이미지 경로를 실제 URL로 변환하는 함수
 import {
@@ -23,23 +23,8 @@ export function MovieDetailPage() {
   // URL에서 가져온 문자열 ID를 숫자로 변환
   const numericMovieId = Number(movieId);
 
-  // 영화 ID가 0보다 큰 정수인지 확인
-  const isValidMovieId = Number.isInteger(numericMovieId) && numericMovieId > 0;
-
-  // TanStack Query로 영화 상세 정보 요청 및 상태 관리
-  const movieDetailQuery = useQuery({
-    // 영화 ID별로 상세 정보를 구분해서 캐시에 저장
-    queryKey: ["movies", "detail", numericMovieId],
-
-    // TMDB API에서 해당 영화의 상세 정보 가져오기
-    queryFn: () => getMovieDetail(numericMovieId),
-
-    // 올바른 영화 ID일 때만 API 요청
-    enabled: isValidMovieId,
-
-    // 영화 상세 정보는 30초 동안 최신 데이터로 취급(main.tsx 설정보다 우선 적용)
-    staleTime: 30 * 1000,
-  });
+  // 공통 Query 설정을 사용해 영화 상세 정보 요청 및 상태 관리
+  const movieDetailQuery = useQuery(movieQueries.detail(numericMovieId));
 
   // API 응답에서 영화 상세 정보 가져오기
   const movie = movieDetailQuery.data ?? null;

@@ -6,14 +6,14 @@ import { getMovieDetail } from "./get-movie-detail";
 
 // 영화 관련 Query 설정을 한곳에서 관리
 export const movieQueries = {
-  // 영화 목록: 페이지 번호별로 캐시 구분
+  ///////// 영화 목록: 페이지 번호별로 캐시 구분
   list: (page: number) =>
     queryOptions({
       queryKey: ["movies", "list", { page }],
       queryFn: () => getMovies({ page }),
     }),
 
-  // 영화 검색: 검색어별로 캐시 구분
+  /////////// 영화 검색: 검색어별로 캐시 구분
   search: (query: string) =>
     queryOptions({
       queryKey: ["movies", "search", { query }],
@@ -23,7 +23,7 @@ export const movieQueries = {
       enabled: query.length > 0,
     }),
 
-  // 영화 상세: 영화 ID별로 캐시 구분
+  /////////// 영화 상세: 영화 ID별로 캐시 구분
   detail: (movieId: number) =>
     queryOptions({
       queryKey: ["movies", "detail", movieId],
