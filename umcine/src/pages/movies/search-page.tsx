@@ -1,7 +1,9 @@
+
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useState, type SubmitEvent } from "react";
+import { useQuery } from "@tanstack/react-query";
+
 import { searchMovies } from "../../api/movies/search-movies";
-import type { TmdbMovieListItem } from "../../api/movies/models";
 import { BookmarkButton } from "../../components/bookmark-button";
 
 export function SearchPage() {
@@ -11,55 +13,23 @@ export function SearchPage() {
   // 검색창에 입력한 문자열
   const [searchText, setSearchText] = useState(query ?? "");
 
-  // TMDB 검색 결과 및 요청 상태
-  const [movies, setMovies] = useState<TmdbMovieListItem[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
   // URL의 검색어가 바뀌면 검색창에도 반영
   useEffect(() => {
     setSearchText(query ?? "");
   }, [query]);
 
-  // TMDB API를 이용한 영화 검색
-  useEffect(() => {
-    let ignore = false;
-    const normalizedQuery = query?.trim() ?? "";
-
-    setMovies([]);
-    setErrorMessage(null);
-
-    // 검색어가 없으면 API 요청하지 않음
-    if (!normalizedQuery) {
-      setIsLoading(false);
-      return;
-    }
-
-    setIsLoading(true);
-
-    searchMovies({ query: normalizedQuery })
-      .then((response) => {
-        if (!ignore) {
-          setMovies(response.results);
-        }
-      })
-      .catch(() => {
-        if (!ignore) {
-          setErrorMessage("검색 결과를 불러오지 못했어요.");
-        }
-      })
-      .finally(() => {
-        if (!ignore) {
-          setIsLoading(false);
-        }
-      });
-
-    return () => {
-      ignore = true;
-    };
-  }, [query]);
-
+  // 앞뒤 공백 제거
   const normalizedQuery = query?.trim() ?? "";
+
+  // TanStack Query로 영화 검색
+  const searchQuery = useQuery({
+    queryKey: ["movies", "search", { query: normalizedQuery }],
+    queryFn: () => searchMovies({ query: normalizedQuery }),
+    enabled: normalizedQuery.length > 0,
+  });
+
+  // API 검색 결과
+  const movies = searchQuery.data?.results ?? [];
 
   function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -164,22 +134,20 @@ export function SearchPage() {
           </p>
         </div>
 
-        {/* 로딩 상태 */}
-        {isLoading ? (
+        {/* 검색 결과 상태 */}
+        {searchQuery.isLoading ? (
           <div className="py-20 text-center">
             <p className="text-sm text-gray-500">
               검색 결과를 불러오는 중이에요.
             </p>
           </div>
-        ) : errorMessage ? (
-          /* 오류 상태 */
+        ) : searchQuery.isError ? (
           <div className="py-20 text-center">
             <p className="text-sm text-red-500">
-              {errorMessage}
+              {searchQuery.error.message}
             </p>
           </div>
-        ) : movies.length === 0 ? (
-          /* 검색 결과가 없는 경우 */
+        ) : searchQuery.isSuccess && movies.length === 0 ? (
           <div className="py-20 text-center">
             <p className="text-sm text-gray-500">
               검색 결과가 없어요.

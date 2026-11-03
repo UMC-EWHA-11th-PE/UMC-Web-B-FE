@@ -1,61 +1,29 @@
+
 import { Link, useParams } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 import { getMovieDetail } from "../../api/movies/get-movie-detail";
-import type { TmdbMovieDetail } from "../../api/movies/models";
 import { getMovieDetailErrorMessage } from "../../utils/movies/get-movie-detail-error-message";
 import { BookmarkButton } from "../../components/bookmark-button";
 
 export function MovieDetailPage() {
-  const { movieId } = useParams({ from: "/movies/$movieId" });
+  const { movieId: movieIdParam } = useParams({
+    from: "/movies/$movieId",
+  });
 
   // URL에서 가져온 영화 ID를 숫자로 변환
-  const parsedMovieId = Number(movieId);
+  const movieId = Number(movieIdParam);
 
-  const isValidMovieId =
-    Number.isInteger(parsedMovieId) && parsedMovieId > 0;
+  // 0보다 큰 정수인지 확인
+  const isValidMovieId = Number.isInteger(movieId) && movieId > 0;
 
-  // 영화 상세 데이터 및 요청 상태
-  const [movie, setMovie] = useState<TmdbMovieDetail | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  // 영화 상세 API 요청
-  useEffect(() => {
-    let ignore = false;
-
-    setMovie(null);
-    setErrorMessage(null);
-
-    // 유효하지 않은 영화 ID라면 요청하지 않음
-    if (!isValidMovieId) {
-      setIsLoading(false);
-      return;
-    }
-
-    setIsLoading(true);
-
-    getMovieDetail(parsedMovieId)
-      .then((response) => {
-        if (!ignore) {
-          setMovie(response);
-        }
-      })
-      .catch((error: unknown) => {
-        if (!ignore) {
-          setErrorMessage(getMovieDetailErrorMessage(error));
-        }
-      })
-      .finally(() => {
-        if (!ignore) {
-          setIsLoading(false);
-        }
-      });
-
-    return () => {
-      ignore = true;
-    };
-  }, [parsedMovieId, isValidMovieId]);
+  // TanStack Query로 영화 상세 정보 요청
+  const movieDetailQuery = useQuery({
+    queryKey: ["movies", "detail", movieId],
+    queryFn: () => getMovieDetail(movieId),
+    enabled: isValidMovieId,
+    staleTime: 30*1000, // 30초 동안 캐시 유지
+  });
 
   // 잘못된 영화 ID
   if (!isValidMovieId) {
@@ -69,7 +37,7 @@ export function MovieDetailPage() {
   }
 
   // 로딩 중
-  if (isLoading) {
+  if (movieDetailQuery.isPending) {
     return (
       <main className="flex min-h-[60vh] items-center justify-center">
         <p className="text-lg font-semibold">
@@ -80,15 +48,18 @@ export function MovieDetailPage() {
   }
 
   // API 요청 오류
-  if (errorMessage) {
+  if (movieDetailQuery.isError) {
     return (
       <main className="flex min-h-[60vh] items-center justify-center">
         <p className="text-lg font-semibold">
-          {errorMessage}
+          {getMovieDetailErrorMessage(movieDetailQuery.error)}
         </p>
       </main>
     );
   }
+
+  // TanStack Query가 반환한 영화 데이터
+  const movie = movieDetailQuery.data;
 
   // 영화 데이터가 없는 경우
   if (!movie) {
