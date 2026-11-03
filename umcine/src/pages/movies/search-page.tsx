@@ -1,26 +1,65 @@
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useState, type SubmitEvent } from "react";
-import { movies } from "../../data/movies";
+import { searchMovies } from "../../api/movies/search-movies";
+import type { TmdbMovieListItem } from "../../api/movies/models";
 import { BookmarkButton } from "../../components/bookmark-button";
 
 export function SearchPage() {
   const { query } = useSearch({ from: "/search" });
   const navigate = useNavigate({ from: "/search" });
+
+  // 검색창에 입력한 문자열
   const [searchText, setSearchText] = useState(query ?? "");
 
+  // TMDB 검색 결과 및 요청 상태
+  const [movies, setMovies] = useState<TmdbMovieListItem[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // URL의 검색어가 바뀌면 검색창에도 반영
   useEffect(() => {
     setSearchText(query ?? "");
   }, [query]);
 
-  const normalizedQuery = query?.trim().toLowerCase() ?? "";
+  // TMDB API를 이용한 영화 검색
+  useEffect(() => {
+    let ignore = false;
+    const normalizedQuery = query?.trim() ?? "";
 
-  const searchResults = normalizedQuery
-    ? movies.filter(
-        (movie) =>
-          movie.title.toLowerCase().includes(normalizedQuery) ||
-          movie.originalTitle.toLowerCase().includes(normalizedQuery),
-      )
-    : [];
+    setMovies([]);
+    setErrorMessage(null);
+
+    // 검색어가 없으면 API 요청하지 않음
+    if (!normalizedQuery) {
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+
+    searchMovies({ query: normalizedQuery })
+      .then((response) => {
+        if (!ignore) {
+          setMovies(response.results);
+        }
+      })
+      .catch(() => {
+        if (!ignore) {
+          setErrorMessage("검색 결과를 불러오지 못했어요.");
+        }
+      })
+      .finally(() => {
+        if (!ignore) {
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, [query]);
+
+  const normalizedQuery = query?.trim() ?? "";
 
   function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -121,19 +160,35 @@ export function SearchPage() {
           </h2>
 
           <p className="text-xs text-gray-400">
-            영화 {searchResults.length}편
+            영화 {movies.length}편
           </p>
         </div>
 
-        {searchResults.length === 0 ? (
+        {/* 로딩 상태 */}
+        {isLoading ? (
+          <div className="py-20 text-center">
+            <p className="text-sm text-gray-500">
+              검색 결과를 불러오는 중이에요.
+            </p>
+          </div>
+        ) : errorMessage ? (
+          /* 오류 상태 */
+          <div className="py-20 text-center">
+            <p className="text-sm text-red-500">
+              {errorMessage}
+            </p>
+          </div>
+        ) : movies.length === 0 ? (
+          /* 검색 결과가 없는 경우 */
           <div className="py-20 text-center">
             <p className="text-sm text-gray-500">
               검색 결과가 없어요.
             </p>
           </div>
         ) : (
+          /* 검색 성공 */
           <ul className="grid grid-cols-1 md:grid-cols-2">
-            {searchResults.map((movie) => (
+            {movies.map((movie) => (
               <li
                 key={movie.id}
                 className="flex gap-4 border-b border-gray-200 py-5 md:pr-8"
@@ -145,7 +200,11 @@ export function SearchPage() {
                   className="shrink-0"
                 >
                   <img
-                    src={movie.posterPath}
+                    src={
+                      movie.poster_path
+                        ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+                        : "/images/no-poster.png"
+                    }
                     alt={`${movie.title} 포스터`}
                     className="h-[160px] w-[105px] rounded-lg object-cover"
                   />
@@ -160,8 +219,10 @@ export function SearchPage() {
                   <BookmarkButton movieId={movie.id} />
 
                   <div className="mt-2 flex flex-wrap gap-3 text-xs text-gray-400">
-                    <span>{movie.originalTitle}</span>
-                    <span>{movie.releaseDate}</span>
+                    <span>{movie.original_title}</span>
+                    <span>
+                      {movie.release_date.replaceAll("-", ".")}
+                    </span>
                   </div>
 
                   <p className="mt-3 line-clamp-2 text-sm leading-6 text-gray-500">
