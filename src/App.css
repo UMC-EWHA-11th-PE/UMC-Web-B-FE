@@ -781,3 +781,35 @@ main {
 .search-result-bookmark.is-bookmarked {
   background: #2563eb;
 }
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin: 24px 0 40px;
+}
+
+.pagination button {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #555;
+  cursor: pointer;
+}
+
+.pagination button:hover:not(:disabled) {
+  background: #e5e7eb;
+}
+
+.pagination button.active {
+  background: #111;
+  color: white;
+}
+
+.pagination button:disabled {
+  color: #cbd5e1;
+  cursor: default;
+}

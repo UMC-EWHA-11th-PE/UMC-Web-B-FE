@@ -1,19 +1,18 @@
 
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useState, type SubmitEvent } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { searchMovies } from "../../api/movies/search-movies";
 import type { Movie } from "../../types/movie";
 import { getTmdbPosterUrl } from "../../utils/movies/tmdb-image";
 import { useBookmarkStore } from "../../utils/bookmark-storage";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 export function SearchPage() {
   const { query } = useSearch({ from: "/search" });
   const navigate = useNavigate({ from: "/search" });
 
   const [searchText, setSearchText] = useState(query ?? "");
-  const [movies, setMovies] = useState<Movie[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const bookmarkedMovieIds = useBookmarkStore(
     (state) => state.bookmarkedMovieIds,
@@ -29,64 +28,34 @@ export function SearchPage() {
 
   const normalizedQuery = query?.trim() ?? "";
 
-  useEffect(() => {
-    let ignore = false;
+  const searchQuery = useQuery({
+    queryKey: ["movies", "search", { query: normalizedQuery }],
+    queryFn: async () => {
+      const response = await searchMovies({
+        query: normalizedQuery,
+        page: 1,
+      });
 
-    setMovies([]);
-    setErrorMessage(null);
+      const mappedMovies: Movie[] = response.results.map((movie) => ({
+        id: movie.id,
+        title: movie.title,
+        originalTitle: movie.original_title,
+        releaseDate: movie.release_date,
+        posterPath: movie.poster_path ?? "",
+        backdropPath: movie.backdrop_path ?? "",
+        genres: [],
+        runtime: "",
+        tagline: "",
+        overview: movie.overview,
+        isBookmarked: false,
+      }));
 
-    if (!normalizedQuery) {
-      setIsLoading(false);
-      return () => {
-        ignore = true;
-      };
-    }
+      return mappedMovies;
+    },
+    enabled: normalizedQuery.length > 0,
+  });
 
-    async function loadSearchResults() {
-      setIsLoading(true);
-
-      try {
-        const response = await searchMovies({
-          query: normalizedQuery,
-          page: 1,
-        });
-
-        const mappedMovies: Movie[] = response.results.map((movie) => ({
-          id: movie.id,
-          title: movie.title,
-          originalTitle: movie.original_title,
-          releaseDate: movie.release_date,
-          posterPath: movie.poster_path ?? "",
-          backdropPath: movie.backdrop_path ?? "",
-          genres: [],
-          runtime: "",
-          tagline: "",
-          overview: movie.overview,
-          isBookmarked: false,
-        }));
-
-        if (!ignore) {
-          setMovies(mappedMovies);
-        }
-      } catch (error) {
-        console.error(error);
-
-        if (!ignore) {
-          setErrorMessage("검색 결과를 불러오지 못했어요.");
-        }
-      } finally {
-        if (!ignore) {
-          setIsLoading(false);
-        }
-      }
-    }
-
-    loadSearchResults();
-
-    return () => {
-      ignore = true;
-    };
-  }, [normalizedQuery]);
+  const movies = searchQuery.data ?? [];
 
   function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -150,16 +119,17 @@ export function SearchPage() {
           <section className="search-results">
             <div className="search-result-header">
               <h2>‘{normalizedQuery}’ 검색 결과</h2>
-              {!isLoading && !errorMessage && (
+
+              {!searchQuery.isPending && !searchQuery.isError && (
                 <p>영화 {movies.length}편</p>
               )}
             </div>
 
-            {isLoading ? (
+            {searchQuery.isPending ? (
               <p>검색 결과를 불러오는 중이에요...</p>
-            ) : errorMessage ? (
+            ) : searchQuery.isError ? (
               <div className="no-search-result">
-                <p>{errorMessage}</p>
+                <p>검색 결과를 불러오지 못했어요.</p>
               </div>
             ) : movies.length === 0 ? (
               <div className="no-search-result">
@@ -250,6 +220,8 @@ export function SearchPage() {
           </section>
         )}
       </div>
+
+      <ReactQueryDevtools initialIsOpen={true} />
     </main>
   );
 }

@@ -1,7 +1,7 @@
+
 import { Link, useParams } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { getMovieDetail } from "../../api/movies/get-movie-detail";
-import type { TmdbMovieDetail } from "../../api/movies/models";
 import type { Movie } from "../../types/movie";
 import {
   getTmdbPosterUrl,
@@ -9,94 +9,80 @@ import {
 } from "../../utils/movies/tmdb-image";
 import { useBookmarkStore } from "../../utils/bookmark-storage";
 import { getMovieDetailErrorMessage } from "../../utils/movies/get-movie-detail-error-message";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 export function MovieDetailPage() {
-  const { movieId } = useParams({ from: "/movies/$movieId" });
+  const { movieId: movieIdParam } = useParams({
+    from: "/movies/$movieId",
+  });
+
+  const movieId = Number(movieIdParam);
+  const isValidMovieId =
+    Number.isInteger(movieId) && movieId > 0;
 
   const bookmarkedMovieIds = useBookmarkStore(
-    (state) => state.bookmarkedMovieIds
+    (state) => state.bookmarkedMovieIds,
   );
+
   const toggleBookmark = useBookmarkStore(
-    (state) => state.toggleBookmark
+    (state) => state.toggleBookmark,
   );
 
-  const [movie, setMovie] = useState<Movie | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState("");
+  const movieDetailQuery = useQuery({
+    queryKey: ["movies", "detail", movieId],
+    queryFn: () => getMovieDetail(movieId),
+    enabled: isValidMovieId,
+  });
 
-  useEffect(() => {
-    let ignore = false;
+  const detail = movieDetailQuery.data;
 
-    async function loadMovieDetail() {
-      setIsLoading(true);
-      setMovie(null);
-      setErrorMessage("");
-
-      const parsedMovieId = Number(movieId);
-
-      if (!Number.isInteger(parsedMovieId) || parsedMovieId <= 0) {
-        setErrorMessage("올바르지 않은 영화 번호예요.");
-        setIsLoading(false);
-        return;
+  const movie: Movie | null = detail
+    ? {
+        id: detail.id,
+        title: detail.title,
+        originalTitle: detail.original_title,
+        releaseDate: detail.release_date ?? "",
+        posterPath: detail.poster_path ?? "",
+        backdropPath: detail.backdrop_path ?? "",
+        genres: detail.genres.map((genre) => genre.name),
+        runtime:
+          detail.runtime == null ? "" : String(detail.runtime),
+        tagline: detail.tagline ?? "",
+        overview: detail.overview ?? "",
+        isBookmarked: false,
       }
+    : null;
 
-      try {
-        const detail: TmdbMovieDetail =
-          await getMovieDetail(parsedMovieId);
-
-        const mappedMovie: Movie = {
-          id: detail.id,
-          title: detail.title,
-          originalTitle: detail.original_title,
-          releaseDate: detail.release_date ?? "",
-          posterPath: detail.poster_path ?? "",
-          backdropPath: detail.backdrop_path ?? "",
-          genres: detail.genres.map((genre) => genre.name),
-          runtime:
-            detail.runtime == null ? "" : String(detail.runtime),
-          tagline: detail.tagline ?? "",
-          overview: detail.overview ?? "",
-          isBookmarked: false,
-        };
-
-        if (!ignore) {
-          setMovie(mappedMovie);
-        }
-      } catch (error) {
-        console.error("영화 상세 정보 요청 실패:", error);
-
-        if (!ignore) {
-          setErrorMessage(getMovieDetailErrorMessage(error));
-        }
-      } finally {
-        if (!ignore) {
-          setIsLoading(false);
-        }
-      }
-    }
-
-    void loadMovieDetail();
-
-    return () => {
-      ignore = true;
-    };
-  }, [movieId]);
-
-  if (isLoading) {
+  if (!isValidMovieId) {
     return (
       <main className="movie-detail-page">
         <div className="detail-container">
-          <p>영화 정보를 불러오는 중이에요...</p>
+          <p>올바르지 않은 영화 번호예요.</p>
+          <Link to="/">영화 목록으로 돌아가기</Link>
         </div>
       </main>
     );
   }
 
-  if (errorMessage || !movie) {
+  if (movieDetailQuery.isPending) {
     return (
       <main className="movie-detail-page">
         <div className="detail-container">
-          <p>{errorMessage || "영화 정보를 찾을 수 없어요."}</p>
+          <p>영화 상세 정보를 불러오는 중이에요...</p>
+        </div>
+      </main>
+    );
+  }
+
+  if (movieDetailQuery.isError || !movie) {
+    return (
+      <main className="movie-detail-page">
+        <div className="detail-container">
+          <p>
+            {movieDetailQuery.isError
+              ? getMovieDetailErrorMessage(movieDetailQuery.error)
+              : "영화 정보를 찾을 수 없어요."}
+          </p>
           <Link to="/">영화 목록으로 돌아가기</Link>
         </div>
       </main>
@@ -184,6 +170,8 @@ export function MovieDetailPage() {
           <button className="rating-save-button">평점 저장</button>
         </aside>
       </section>
+      
+      <ReactQueryDevtools initialIsOpen={true} />
     </main>
   );
 }
