@@ -8,4 +8,7 @@ if (!tmdbApiBaseUrl || !tmdbAccessToken) {
 export const env = {
   tmdbApiBaseUrl,
   tmdbAccessToken,
+
+  //spring boot 회원 API 서버 주소
+  apiBaseUrl: import.meta.env.VITE_API_BASE_URL || "",
 };
