@@ -24,9 +24,13 @@ export function Header() {
           >
             검색
           </Link>
-          <a href="#" className="text-sm text-gray-600">
+          <Link
+            to="/me"
+            className="text-sm text-gray-600"
+            activeProps={{ className: "text-sm font-bold text-gray-900" }}
+          >
             내 정보
-          </a>
+          </Link>
         </nav>
       </div>
       <div className="flex items-center gap-3">
@@ -37,12 +41,12 @@ export function Header() {
         >
           🔍
         </button>
-        <button
-          type="button"
+        <Link
+          to="/login"
           className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white"
         >
           로그인
-        </button>
+        </Link>
       </div>
     </header>
   );
