@@ -1,4 +1,4 @@
-import { use, useState } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { MovieGrid } from '../../components/movies/movie-grid';
 import { Pagination } from '../../components/movies/pagination';

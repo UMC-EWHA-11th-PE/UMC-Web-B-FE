@@ -1,28 +1,37 @@
-import { create } from "zustand";
-import { createJSONStorage, persist } from "zustand/middleware";
+import { create } from 'zustand';
+import { createJSONStorage, persist } from 'zustand/middleware';
+import { useAuthStore } from './auth-store';
+import { readToken } from '@/api/session';
 
-interface BookmarkStore {
-  bookmarkedMovieIds: number[]; //북마크한 영화 ID만 저장 
-  toggleBookmark: (movieId: number) => void; 
+const owner = () => readToken(useAuthStore.getState().accessToken)?.sub ?? 'guest';
+function initialBookmarks(): Record<string, number[]> {
+  try {
+    if (localStorage.getItem('umcine-bookmarks-by-member')) return {};
+    const previous = JSON.parse(localStorage.getItem('umcine-bookmark-store') ?? 'null');
+    const ids: unknown = previous?.state?.bookmarkedMovieIds;
+    return Array.isArray(ids) ? { [owner()]: ids.filter((id): id is number => Number.isInteger(id) && id > 0) } : {};
+  } catch { return {}; }
 }
-
-export const useBookmarkStore = create<BookmarkStore>()(
-  persist( // persist 미들웨어를 사용하여 상태를 로컬 스토리지에 저장
-    (set) => ({
-      bookmarkedMovieIds: [],
-      toggleBookmark: (movieId) =>
-        set((state) => ({
-          bookmarkedMovieIds: state.bookmarkedMovieIds.includes(movieId)
-            ? state.bookmarkedMovieIds.filter((id) => id !== movieId)
-            : [...state.bookmarkedMovieIds, movieId],
-        })),
-    }),
-    {
-      name: "umcine-bookmark-store",  // 로컬 스토리지에 저장될 키 이름
-      storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ // 저장한 데이터로 영화 ID 배열을 선택 
-        bookmarkedMovieIds: state.bookmarkedMovieIds,
-      }),
-    },
-  ),
-);
+interface BookmarkStore {
+  bookmarkedMovieIds: number[];
+  byMember: Record<string, number[]>;
+  toggleBookmark: (movieId: number) => void;
+  switchMember: () => void;
+}
+export const useBookmarkStore = create<BookmarkStore>()(persist((set) => ({
+  bookmarkedMovieIds: [],
+  byMember: initialBookmarks(),
+  switchMember: () => set(state => ({ bookmarkedMovieIds: state.byMember[owner()] ?? [] })),
+  toggleBookmark: movieId => set(state => {
+    const key = owner();
+    const previous = state.byMember[key] ?? [];
+    const ids = previous.includes(movieId) ? previous.filter(id => id !== movieId) : [...previous, movieId];
+    return { bookmarkedMovieIds: ids, byMember: { ...state.byMember, [key]: ids } };
+  }),
+}), {
+  name: 'umcine-bookmarks-by-member',
+  storage: createJSONStorage(() => localStorage),
+  partialize: state => ({ byMember: state.byMember }),
+}));
+useBookmarkStore.getState().switchMember();
+useAuthStore.subscribe(() => useBookmarkStore.getState().switchMember());
