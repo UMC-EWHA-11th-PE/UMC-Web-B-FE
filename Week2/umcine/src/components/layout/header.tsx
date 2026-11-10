@@ -1,8 +1,22 @@
-import { Link, useLocation } from '@tanstack/react-router';
+import { useAuthStore } from '@/stores/auth-store';
+import { useProfileStore } from '@/stores/profile-store';
+import { readToken } from '@/api/session';
+import { useQueryClient } from '@tanstack/react-query';
+import { Link, useLocation, useNavigate } from '@tanstack/react-router';
 import { cn } from '../../utils/cn';
 
 export function Header() {
   const { pathname } = useLocation();
+  const token = useAuthStore(state => state.accessToken);
+  const loggedIn = !!readToken(token);
+  const navigate = useNavigate();
+  const client = useQueryClient();
+  function logout() {
+    useAuthStore.getState().clearAuth();
+    useProfileStore.getState().clearProfile();
+    client.removeQueries({ queryKey: ['ratings'] });
+    void navigate({ to: '/login' });
+  }
   const isMovieActive=pathname==="/"||pathname.startsWith("/movies/");
   const isSearchActive=pathname==="/search";
   
@@ -33,8 +47,22 @@ export function Header() {
         >
           검색
         </Link>  
+        <Link
+          to="/mypage"
+          aria-current={pathname.startsWith("/mypage") ? "page" : undefined}
+          className={cn(
+            "text-gray-500 transition-colors hover:text-blue-600",
+            pathname.startsWith("/mypage") &&
+              "font-bold text-gray-900 underline underline-offset-4",
+          )}
+        >
+          내 정보
+        </Link>
       </nav>
-      <Link to="/search" aria-label="영화 검색" className="ml-auto grid size-[42px] place-items-center rounded-lg border border-slate-200 hover:bg-slate-50"><img src="/icons/search.svg" alt="" className="size-5" /></Link>
+      <div className="ml-auto flex items-center gap-3 text-xs font-bold">
+        {loggedIn ? <button type="button" onClick={logout}>로그아웃</button> : <><Link to="/login">로그인</Link><Link to="/signup">회원가입</Link></>}
+      </div>
+      <Link to="/search" aria-label="영화 검색" className="ml-3 grid size-[42px] place-items-center rounded-lg border border-slate-200 hover:bg-slate-50"><img src="/icons/search.svg" alt="" className="size-5" /></Link>
     </div>
   </header>;
 }

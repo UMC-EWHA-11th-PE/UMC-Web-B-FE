@@ -1,6 +1,6 @@
 import { Link, useParams } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { RatingEditor } from '@/components/movies/rating-editor';
 import { cn } from '../../utils/cn';
 import { getMovieDetail } from '../../api/movies/get-movie-detail';
 import { getMovieDetailErrorMessage } from '../../utils/movies/get-movie-detail-error-message';
@@ -17,10 +17,6 @@ export function MovieDetailPage() {
 
   const movieId = Number(movieIdParam);
   const isValidMovieId = Number.isInteger(movieId) && movieId > 0;
-
-  const [reviews, setReviews] = useState<
-    Record<number, { rating: number; text: string; saved: boolean }>
-  >({});
 
   const movieDetailQuery = useQuery({
     queryKey: ['movies', 'detail', movieId],
@@ -74,38 +70,6 @@ export function MovieDetailPage() {
   const movieDetail = movieDetailQuery.data;
   const posterUrl = getTmdbPosterUrl(movieDetail.poster_path);
   const backdropUrl = getTmdbBackdropUrl(movieDetail.backdrop_path);
-
-  const review = reviews[movieDetail.id] ?? {
-    rating: 0,
-    text: '',
-    saved: false,
-  };
-
-  function updateReview(
-    changes: Partial<{
-      rating: number;
-      text: string;
-      saved: boolean;
-    }>,
-  ) {
-    const reviewMovieId = movieDetail.id;
-
-    setReviews(current => {
-      const previousReview = current[reviewMovieId] ?? {
-        rating: 0,
-        text: '',
-        saved: false,
-      };
-
-      return {
-        ...current,
-        [reviewMovieId]: {
-          ...previousReview,
-          ...changes,
-        },
-      };
-    });
-  }
 
   return (
     <main className="flex-1">
@@ -205,79 +169,7 @@ export function MovieDetailPage() {
             내 평점
           </h2>
 
-          <p className="mb-2 text-xs text-slate-500">
-            별점은 필수, 후기는 선택이에요.
-          </p>
-
-          <div
-            role="group"
-            aria-label="평점 선택"
-            className="mb-2 flex gap-1"
-          >
-            {[1, 2, 3, 4, 5].map(star => (
-              <button
-                key={star}
-                type="button"
-                aria-label={`${star}점`}
-                aria-pressed={review.rating === star}
-                onClick={() =>
-                  updateReview({ rating: star, saved: false })
-                }
-                className={cn(
-                  'grid size-8 cursor-pointer place-items-center rounded-md border bg-white',
-                  star <= review.rating
-                    ? 'border-amber-400'
-                    : 'border-slate-200',
-                )}
-              >
-                <img
-                  src={
-                    star <= review.rating
-                      ? '/icons/star.svg'
-                      : '/icons/star-outline.svg'
-                  }
-                  alt=""
-                  className="size-5"
-                />
-              </button>
-            ))}
-          </div>
-
-          <textarea
-            aria-label="영화 후기"
-            placeholder="영화를 보고 느낀 점을 남겨보세요"
-            value={review.text}
-            onChange={event =>
-              updateReview({
-                text: event.target.value,
-                saved: false,
-              })
-            }
-            className="
-              block h-[82px] w-full resize-y rounded-md
-              border border-slate-200 bg-white p-3 text-xs
-              focus:outline-2 focus:outline-blue-500
-            "
-          />
-
-          <button
-            type="button"
-            disabled={review.rating === 0}
-            onClick={() => updateReview({ saved: true })}
-            className="
-              mt-2 w-full cursor-pointer rounded-md
-              bg-[#20242c] py-2.5 text-[13px] font-bold text-white
-              disabled:cursor-not-allowed disabled:opacity-40
-            "
-          >
-            평점 저장
-          </button>
-
-          <p role="status" className="mt-2 text-xs text-slate-500">
-            {review.saved
-              ? '현재 화면에 평점을 저장했어요.'
-              : '평점과 후기는 새로고침하면 초기화돼요.'}
-          </p>
+          <RatingEditor movieId={movieId} />
         </aside>
       </div>
     </main>
