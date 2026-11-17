@@ -4,6 +4,9 @@ import { readToken } from '@/api/session';
 import { useQueryClient } from '@tanstack/react-query';
 import { Link, useLocation, useNavigate } from '@tanstack/react-router';
 import { cn } from '../../utils/cn';
+import { useQuery } from "@tanstack/react-query";
+import { getMe } from "@/api/members/me";
+
 
 export function Header() {
   const { pathname } = useLocation();
@@ -11,6 +14,17 @@ export function Header() {
   const loggedIn = !!readToken(token);
   const navigate = useNavigate();
   const client = useQueryClient();
+  
+  //내 정보 query
+  const accessToken=useAuthStore((state)=>state.accessToken);
+  const meQuery=useQuery({
+    queryKey:["members","me"],
+    queryFn:getMe,
+    enabled:Boolean(accessToken),
+    staleTime:5*60*1000,
+    retry:false
+  });
+
   function logout() {
     useAuthStore.getState().clearAuth();
     useProfileStore.getState().clearProfile();
@@ -60,7 +74,13 @@ export function Header() {
         </Link>
       </nav>
       <div className="ml-auto flex items-center gap-3 text-xs font-bold">
-        {loggedIn ? <button type="button" onClick={logout}>로그아웃</button> : <><Link to="/login">로그인</Link><Link to="/signup">회원가입</Link></>}
+        {!accessToken ? (
+          <Link to="/login">로그인</Link>
+        ) : meQuery.isLoading ? (
+          <span className="h-10 w-24 animate-pulse rounded-lg bg-gray-200" />
+        ) : (
+          <Link to="/mypage">마이페이지</Link>
+        )}
       </div>
       <Link to="/search" aria-label="영화 검색" className="ml-3 grid size-[42px] place-items-center rounded-lg border border-slate-200 hover:bg-slate-50"><img src="/icons/search.svg" alt="" className="size-5" /></Link>
     </div>

@@ -1,84 +1,30 @@
-import { useState, type SubmitEvent } from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
-import { useQueryClient } from "@tanstack/react-query";
-import { errorMessage as getErrorMessage } from "@/api/errors";
-import { readToken } from "@/api/session";
+import { useState } from "react";
+import { Link } from "@tanstack/react-router";
+import { useLoginMutation } from "@/hooks/use-login-mutation";
 
-import { login } from "@/api/members/auth";
-import { useAuthStore } from "@/stores/auth-store";
-import { useProfileStore } from "@/stores/profile-store";
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export function LoginPage(){
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
+export function LoginPage() {
+  const [form, setForm] = useState({ email: "", password: "" });
 
-  const setAccessToken = useAuthStore((state) => state.setAccessToken);
-  const updateProfile = useProfileStore((state) => state.updateProfile);
-
-  const [form, setForm] = useState({
-    email: "",
-    password: "",
-  });
-
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-
-  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
-    form.email.trim(),
-  );
-
+  const loginMutation = useLoginMutation();
+  const isSubmitting = loginMutation.isPending;
+  const isEmailValid = EMAIL_REGEX.test(form.email.trim());
   const showEmailError = form.email.length > 0 && !isEmailValid;
   const canSubmit = isEmailValid && form.password.length > 0;
 
-  async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
-    event.preventDefault();
+  const handleLogin = () => {
+    if (!canSubmit || isSubmitting) return;
 
-    if (!canSubmit|| isSubmitting) {
-      return;
-    }
+    loginMutation.mutate({
+      email: form.email.trim(),
+      password: form.password,
+    });
+  };
 
-    setIsSubmitting(true);
-    setErrorMessage("");
-
-
-
-    try{
-      //토큰 발급 받기
-       const result = await login({
-        email: form.email.trim(),
-        password: form.password,
-      });
-
-      const claims = readToken(result.accessToken);
-      if (!claims) throw new Error("서버에서 유효한 로그인 토큰을 받지 못했어요.");
-      const member = { email: claims.email, nickname: result.nickname };
-      //이전 계정의 회원 정보의 캐시 제거
-      queryClient.removeQueries({ queryKey: ["members"] });
-      updateProfile({
-        email: member.email,
-        nickname: member.nickname,
-        image: ""
-      })
-      queryClient.setQueryData(["members", "me"], member);
-      setAccessToken(result.accessToken);
-
-      setForm((prev)=>({
-        ...prev, password:""
-      }));
-
-      void navigate({ to: "/mypage" });
-
-    }catch (error) {
-      setErrorMessage(await getErrorMessage(error));
-    } finally {
-      setIsSubmitting(false);
-    }}
-
-    return (
+  return (
     <main className="flex flex-1 items-center justify-center px-5 py-20">
-      <form
-        onSubmit={handleSubmit}
-        noValidate
+      <div
         aria-busy={isSubmitting}
         className="w-full max-w-[400px]"
       >
@@ -112,7 +58,6 @@ export function LoginPage(){
                   ...prev,
                   email: event.target.value,
                 }));
-                setErrorMessage("");
               }}
               aria-invalid={showEmailError}
               aria-describedby={
@@ -160,21 +105,15 @@ export function LoginPage(){
                   ...prev,
                   password: event.target.value,
                 }));
-                setErrorMessage("");
               }}
               className="h-11 min-w-0 flex-1 bg-transparent px-2 text-sm outline-none placeholder:text-slate-400 disabled:opacity-50"
             />
           </div>
         </div>
 
-        {errorMessage && (
-          <p role="alert" className="mb-3 text-xs text-red-500">
-            {errorMessage}
-          </p>
-        )}
-
         <button
-          type="submit"
+          type="button"
+          onClick={handleLogin}
           disabled={!canSubmit || isSubmitting}
           className="h-11 w-full cursor-pointer rounded-md bg-blue-600 text-sm font-bold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
@@ -190,10 +129,7 @@ export function LoginPage(){
             회원가입
           </Link>
         </p>
-      </form>
+      </div>
     </main>
   );
 }
-    
-    
-  

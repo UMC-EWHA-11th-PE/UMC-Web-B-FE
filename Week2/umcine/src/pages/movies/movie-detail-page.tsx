@@ -1,10 +1,16 @@
 import { Link, useParams } from '@tanstack/react-router';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  addFavorite,
+  deleteFavorite,
+  getFavoriteStatus,
+} from '@/api/favorites/favorites';
+import { readToken } from '@/api/session';
+import { useAuthStore } from '@/stores/auth-store';
 import { RatingEditor } from '@/components/movies/rating-editor';
 import { cn } from '../../utils/cn';
 import { getMovieDetail } from '../../api/movies/get-movie-detail';
 import { getMovieDetailErrorMessage } from '../../utils/movies/get-movie-detail-error-message';
-import { useBookmarkStore } from '../../stores/bookmark-store';
 import {
   getTmdbPosterUrl,
   getTmdbBackdropUrl,
@@ -24,12 +30,47 @@ export function MovieDetailPage() {
     enabled: isValidMovieId,
   });
 
-  const movie = movieDetailQuery.data;
+  const token = useAuthStore((state) => state.accessToken);
+  const memberId = readToken(token)?.sub;
+  const queryClient = useQueryClient();
 
-  const isBookmarked = useBookmarkStore(state =>
-    movie ? state.bookmarkedMovieIds.includes(movie.id) : false,
-  );
-  const toggleBookmark = useBookmarkStore(state => state.toggleBookmark);
+  const favoriteStatusQuery = useQuery({
+    queryKey: ['favorites', memberId, 'detail', movieId],
+    queryFn: () => getFavoriteStatus(movieId),
+    enabled: Boolean(memberId) && isValidMovieId,
+  });
+
+  const favoriteMutation = useMutation({
+    mutationFn: ({
+      movieId,
+      wasFavorite,
+    }: {
+      memberId: string;
+      movieId: number;
+      wasFavorite: boolean;
+    }) => (wasFavorite ? deleteFavorite(movieId) : addFavorite(movieId)),
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({
+        queryKey: ['favorites', variables.memberId],
+      });
+    },
+  });
+
+  const isBookmarked = favoriteStatusQuery.data === true;
+  const canToggleFavorite =
+    favoriteStatusQuery.isSuccess &&
+    !favoriteStatusQuery.isFetching &&
+    !favoriteMutation.isPending;
+
+  const handleToggleFavorite = () => {
+    if (!memberId || !canToggleFavorite) return;
+
+    favoriteMutation.mutate({
+      memberId,
+      movieId,
+      wasFavorite: isBookmarked,
+    });
+  };
 
   if (!isValidMovieId) {
     return (
@@ -144,17 +185,49 @@ export function MovieDetailPage() {
               {movieDetail.overview}
             </p>
 
-            <button
-              type="button"
-              aria-pressed={isBookmarked}
-              onClick={() => toggleBookmark(movieDetail.id)}
-              className={cn(
-                'cursor-pointer rounded-md px-3 py-2 text-[13px] font-bold text-white',
-                isBookmarked ? 'bg-slate-700' : 'bg-blue-600',
-              )}
-            >
-              {isBookmarked ? '즐겨찾기 해제' : '즐겨찾기'}
-            </button>
+            {!memberId ? (
+              <Link to="/login" className="text-sm font-bold text-blue-600">
+                로그인 후 즐겨찾기
+              </Link>
+            ) : favoriteStatusQuery.isError ? (
+              <div className="text-sm">
+                <p role="alert">즐겨찾기 상태를 불러오지 못했어요.</p>
+                <button
+                  type="button"
+                  onClick={() => void favoriteStatusQuery.refetch()}
+                  className="mt-2 text-blue-600"
+                >
+                  다시 시도
+                </button>
+              </div>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  aria-pressed={isBookmarked}
+                  onClick={handleToggleFavorite}
+                  disabled={!canToggleFavorite}
+                  className={cn(
+                    'cursor-pointer rounded-md px-3 py-2 text-[13px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-50',
+                    isBookmarked ? 'bg-slate-700' : 'bg-blue-600',
+                  )}
+                >
+                  {favoriteMutation.isPending
+                    ? '처리 중…'
+                    : favoriteStatusQuery.isPending
+                      ? '확인 중…'
+                      : isBookmarked
+                        ? '즐겨찾기 해제'
+                        : '즐겨찾기'}
+                </button>
+
+                {favoriteMutation.isError && (
+                  <p role="alert" className="mt-2 text-sm text-red-600">
+                    즐겨찾기를 변경하지 못했어요. 다시 시도해 주세요.
+                  </p>
+                )}
+              </>
+            )}
           </div>
         </section>
 

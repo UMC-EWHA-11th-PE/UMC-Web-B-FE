@@ -6,29 +6,38 @@ import { useProfileStore } from '@/stores/profile-store';
 import { updateMember } from '@/api/members/auth';
 import { checkNicknameDuplicate } from '@/api/members/check-nickname-duplicate';
 import { errorMessage } from '@/api/errors';
+
 export function MyPage() {
   const token = useAuthStore(state => state.accessToken);
   const profile = useProfileStore(state => state.profile);
+  
   const [nickname, setNickname] = useState(profile.nickname);
   const [checked, setChecked] = useState('');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
+  
   const navigate = useNavigate();
   const value = nickname.trim();
   const valid = value.length >= 2 && value.length <= 12;
+  
   async function check() {
     setBusy(true); setMessage('');
     try {
       const result = await checkNicknameDuplicate(value);
+
       setChecked(result.available ? value : '');
       setMessage(result.available ? '사용할 수 있는 닉네임이에요.' : '이미 사용 중인 닉네임이에요.');
     } catch (error) { setMessage(await errorMessage(error)); }
     finally { setBusy(false); }
   }
+  
+  
   async function submit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
+    
     if (busy || !valid || checked !== value || value === profile.nickname) return;
     setBusy(true); setMessage('');
+    
     try {
       const member = await updateMember(value);
       useProfileStore.getState().updateProfile(member);
@@ -36,7 +45,12 @@ export function MyPage() {
     } catch (error) { setMessage(await errorMessage(error)); }
     finally { setBusy(false); }
   }
-  if (!readToken(token)) return <main className="p-10"><Link to="/login">로그인이 필요해요. 로그인하기</Link></main>;
+  
+  
+  if (!readToken(token)) 
+    return <main className="p-10"><Link to="/login">로그인이 필요해요. 로그인하기</Link></main>;
+  
+  
   return <main className="mx-auto w-full max-w-xl flex-1 px-5 py-10">
     <h1 className="mb-6 text-2xl font-bold">내 정보 수정</h1>
     <form onSubmit={submit}>
