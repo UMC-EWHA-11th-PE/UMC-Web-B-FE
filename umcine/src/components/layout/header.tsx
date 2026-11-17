@@ -1,37 +1,22 @@
 import { Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { getMe } from "../../api/members/me";
+import { useAuthStore } from "../../stores/auth-store";
 
 export function Header() {
+  const accessToken = useAuthStore((state) => state.accessToken);
+  const meQuery = useQuery({
+    queryKey: ["members", "me"],
+    queryFn: getMe,
+    enabled: Boolean(accessToken),
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
+
   return (
     <header className="flex items-center justify-between border-b border-gray-200 bg-white px-10 py-4">
       <div className="flex items-center gap-8">
-        <span className="text-xl">
-          <img src="/icons/movie.svg" alt="UMCine" />
-        </span>
-        <span className="text-lg font-bold">UMCine</span>
-        <nav className="flex gap-5">
-          <Link
-            to="/"
-            className="text-sm text-gray-600"
-            activeProps={{ className: "text-sm font-bold text-gray-900" }}
-            activeOptions={{ exact: true }}
-          >
-            영화
-          </Link>
-          <Link
-            to="/search"
-            className="text-sm text-gray-600"
-            activeProps={{ className: "text-sm font-bold text-gray-900" }}
-          >
-            검색
-          </Link>
-          <Link
-            to="/me"
-            className="text-sm text-gray-600"
-            activeProps={{ className: "text-sm font-bold text-gray-900" }}
-          >
-            내 정보
-          </Link>
-        </nav>
+        {/* 로고, 메뉴는 기존 그대로 */}
       </div>
       <div className="flex items-center gap-3">
         <button
@@ -41,12 +26,24 @@ export function Header() {
         >
           🔍
         </button>
-        <Link
-          to="/login"
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white"
-        >
-          로그인
-        </Link>
+
+        {!accessToken ? (
+          <Link
+            to="/login"
+            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white"
+          >
+            로그인
+          </Link>
+        ) : meQuery.isLoading ? (
+          <span className="h-10 w-24 animate-pulse rounded-lg bg-gray-200" />
+        ) : (
+          <Link
+            to="/me"
+            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white"
+          >
+            마이페이지
+          </Link>
+        )}
       </div>
     </header>
   );
