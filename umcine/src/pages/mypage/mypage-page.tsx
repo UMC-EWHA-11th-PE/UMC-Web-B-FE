@@ -1,19 +1,34 @@
+
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { UserRound, ChevronLeft, ChevronRight } from "lucide-react";
+
 import { movies } from "../../data/movies";
 import { useBookmarkStore } from "../../stores/bookmark-store";
-
-const MOCK_USER = {
-  nickname: "gs0428",
-  email: "gwangsoo@cinemalab.kr",
-};
+import { useAuthStore } from "../../stores/auth-store";
+import { getMe } from "../../api/members/me";
 
 const ITEMS_PER_PAGE = 3;
 
 export function MyPage() {
   const [currentPage, setCurrentPage] = useState(1);
 
+  // 로그인 토큰 가져오기
+  const accessToken = useAuthStore(
+    (state) => state.accessToken
+  );
+
+  // 로그인한 회원 정보 조회
+  const meQuery = useQuery({
+    queryKey: ["members", "me"],
+    queryFn: getMe,
+    enabled: Boolean(accessToken),
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
+
+  // 즐겨찾기 상태
   const bookmarkedMovieIds = useBookmarkStore(
     (state) => state.bookmarkedMovieIds
   );
@@ -48,32 +63,48 @@ export function MyPage() {
           </Link>
         </div>
 
+        {/* 기본 정보 */}
         <section className="border-b border-[#E2E5EA] py-6">
           <h2 className="mb-5 text-base font-bold">
             기본 정보
           </h2>
 
-          <div className="flex items-center gap-12">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#E4E6EB]">
-              <UserRound size={36} />
-            </div>
+          {meQuery.isPending ? (
+            <p className="py-6 text-sm text-gray-400">
+              회원 정보를 불러오는 중...
+            </p>
+          ) : meQuery.isError ? (
+            <p className="py-6 text-sm text-red-500">
+              회원 정보를 불러오지 못했습니다.
+            </p>
+          ) : (
+            <div className="flex items-center gap-12">
+              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#E4E6EB]">
+                <UserRound size={36} />
+              </div>
 
-            <div>
-              <p className="mb-1 text-xs text-gray-400">닉네임</p>
-              <p className="text-sm font-semibold">
-                {MOCK_USER.nickname}
-              </p>
-            </div>
+              <div>
+                <p className="mb-1 text-xs text-gray-400">
+                  닉네임
+                </p>
+                <p className="text-sm font-semibold">
+                  {meQuery.data.nickname}
+                </p>
+              </div>
 
-            <div>
-              <p className="mb-1 text-xs text-gray-400">이메일</p>
-              <p className="text-sm font-semibold">
-                {MOCK_USER.email}
-              </p>
+              <div>
+                <p className="mb-1 text-xs text-gray-400">
+                  이메일
+                </p>
+                <p className="text-sm font-semibold">
+                  {meQuery.data.email}
+                </p>
+              </div>
             </div>
-          </div>
+          )}
         </section>
 
+        {/* 즐겨찾기 */}
         <section className="py-6">
           <h2 className="mb-5 text-base font-bold">
             내 즐겨찾기

@@ -1,22 +1,31 @@
 
-import { useState, type FormEvent } from "react";
+import { useState, type SubmitEvent } from "react";
 import { Link } from "@tanstack/react-router";
+import { useLoginMutation } from "../../hooks/use-login-mutation";
 
+// 이메일 형식 검사
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+const DEFAULT_FORM = {
+  email: "",
+  password: "",
+};
+
 export function LoginPage() {
-  const [form, setForm] = useState({
-    email: "",
-    password: "",
-  });
+  // 로그인 입력값 관리
+  const [form, setForm] = useState(DEFAULT_FORM);
 
-  const isEmailValid = EMAIL_REGEX.test(form.email.trim());
-  const isPasswordValid = form.password.length > 0;
+  // 로그인 API 요청 상태 관리
+  const loginMutation = useLoginMutation();
 
-  const canSubmit = isEmailValid && isPasswordValid;
+  // 이메일 형식과 비밀번호 입력 여부 확인
+  const canSubmit =
+    EMAIL_REGEX.test(form.email.trim()) &&
+    form.password.length > 0;
 
+  // 입력값 변경
   const handleChangeField = (
-    key: "email" | "password",
+    key: keyof typeof DEFAULT_FORM,
     value: string
   ) => {
     setForm((prev) => ({
@@ -25,13 +34,18 @@ export function LoginPage() {
     }));
   };
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  // 로그인 API 요청
+  const handleSubmit = (
+    event: SubmitEvent<HTMLFormElement>
+  ) => {
+    event.preventDefault();
 
-    if (!canSubmit) return;
+    if (!canSubmit || loginMutation.isPending) return;
 
-    // 로그인 API는 추후 연결
-    alert("로그인 API는 아직 연결되지 않았어요.");
+    loginMutation.mutate({
+      email: form.email.trim(),
+      password: form.password,
+    });
   };
 
   return (
@@ -55,38 +69,17 @@ export function LoginPage() {
               이메일
             </label>
 
-            <div className="flex h-11 items-center rounded-md border border-[#E2E5EA] bg-white focus-within:border-[#4B63E6]">
-              <span className="pl-3 text-[#A0A8B8]">
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                >
-                  <rect x="3" y="5" width="18" height="14" rx="2" />
-                  <path d="m3 7 9 6 9-6" />
-                </svg>
-              </span>
-
-              <input
-                id="email"
-                type="email"
-                placeholder="name@example.com"
-                value={form.email}
-                onChange={(e) =>
-                  handleChangeField("email", e.target.value)
-                }
-                className="min-w-0 flex-1 bg-transparent px-3 text-sm outline-none placeholder:text-[#A0A8B8]"
-              />
-            </div>
-
-            {form.email.length > 0 && !isEmailValid && (
-              <p className="mt-1 text-xs text-red-500">
-                올바른 이메일 형식을 입력해주세요.
-              </p>
-            )}
+            <input
+              id="email"
+              type="email"
+              placeholder="name@example.com"
+              value={form.email}
+              disabled={loginMutation.isPending}
+              onChange={(e) =>
+                handleChangeField("email", e.target.value)
+              }
+              className="h-11 w-full rounded-md border border-[#E2E5EA] bg-white px-3 text-sm outline-none placeholder:text-[#A0A8B8] focus:border-[#4B63E6] disabled:bg-gray-50"
+            />
           </div>
 
           {/* 비밀번호 */}
@@ -98,50 +91,35 @@ export function LoginPage() {
               비밀번호
             </label>
 
-            <div className="flex h-11 items-center rounded-md border border-[#E2E5EA] bg-white focus-within:border-[#4B63E6]">
-              <span className="pl-3 text-[#A0A8B8]">
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                >
-                  <rect x="5" y="10" width="14" height="11" rx="2" />
-                  <path d="M8 10V7a4 4 0 0 1 8 0v3" />
-                </svg>
-              </span>
-
-              <input
-                id="password"
-                type="password"
-                placeholder="비밀번호"
-                value={form.password}
-                onChange={(e) =>
-                  handleChangeField("password", e.target.value)
-                }
-                className="min-w-0 flex-1 bg-transparent px-3 text-sm outline-none placeholder:text-[#A0A8B8]"
-              />
-            </div>
+            <input
+              id="password"
+              type="password"
+              placeholder="비밀번호를 입력해주세요"
+              value={form.password}
+              disabled={loginMutation.isPending}
+              onChange={(e) =>
+                handleChangeField("password", e.target.value)
+              }
+              className="h-11 w-full rounded-md border border-[#E2E5EA] bg-white px-3 text-sm outline-none placeholder:text-[#A0A8B8] focus:border-[#4B63E6] disabled:bg-gray-50"
+            />
           </div>
 
           {/* 로그인 버튼 */}
           <button
             type="submit"
-            disabled={!canSubmit}
-            className="h-11 w-full rounded-md bg-[#4B63E6] text-sm font-semibold text-white transition-colors hover:bg-[#3D53D0] disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={!canSubmit || loginMutation.isPending}
+            className="mt-2 h-11 w-full rounded-md bg-[#4B63E6] text-sm font-semibold text-white transition-colors hover:bg-[#3D53D0] disabled:cursor-not-allowed disabled:opacity-50"
           >
-            로그인
+            {loginMutation.isPending ? "로그인 중" : "로그인"}
           </button>
         </form>
 
-        {/* 회원가입 링크 */}
-        <p className="mt-5 text-center text-xs text-[#8D95A5]">
-          처음이신가요?{" "}
+        {/* 회원가입 이동 */}
+        <p className="mt-4 text-center text-xs text-[#8D95A5]">
+          아직 계정이 없나요?{" "}
           <Link
             to="/signup"
-            className="font-semibold text-[#4B63E6] hover:underline"
+            className="font-semibold text-[#4B63E6] no-underline"
           >
             회원가입
           </Link>
