@@ -1,6 +1,17 @@
 import { Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { getMe } from "../../api/members/me";
+import { useAuthStore } from "../../stores/auth-store";
 
 function Header() {
+  const accessToken = useAuthStore((state) => state.accessToken);
+  const meQuery = useQuery({
+    queryKey: ["members", "me"],
+    queryFn: getMe,
+    enabled: Boolean(accessToken),
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
   return (
     <header className="header">
       <div className="header-inner">
@@ -30,11 +41,21 @@ function Header() {
             />
           </button>
 
-          <button className="login-button">로그인</button>
-        </div>
-      </div>
-    </header>
-  );
-}
+          {!accessToken ? (
+            <Link to="/login" className="login-button">
+              로그인
+            </Link>
+          ) : meQuery.isLoading ? (
+            <span className="h-10 w-24 animate-pulse rounded-lg bg-gray-200" />
+          ) : (
+            <Link to="/my" className="login-button">
+              마이페이지
+            </Link>
+          )}
+                  </div>
+                </div>
+              </header>
+            );
+          }
 
 export default Header;

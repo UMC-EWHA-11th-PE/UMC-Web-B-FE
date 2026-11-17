@@ -1,75 +1,42 @@
-# React + TypeScript + Vite
+# 🌐 Web-B
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+UMC EWHA 11th PE Web B 프론트엔드 레포지토리입니다.
 
-Currently, two official plugins are available:
+## 🙌 Our Crew
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+| 닉네임 | 이름 | GitHub |
+|:---:|:---|:---|
+| 전졔 | 전지혜 | [@jjihye-0108](https://github.com/jjihye-0108) |
+| 은비 | 김은비 | [@Eunbi2741](https://github.com/Eunbi2741) |
+| 미로 | 김형륜 | [@kimhyeongryun](https://github.com/kimhyeongryun) |
+| 제이드 | 서영 | [@Jade0728](https://github.com/Jade0728) |
+| 조던 | 김재희 | [@goodispotato](https://github.com/goodispotato) |  
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🌳 Branch 구조
 
-## Expanding the ESLint configuration
+작업 공간을 안전하게 분리하기 위해 아래와 같은 브랜치 구조를 사용합니다.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+```text
+main
+ └── 닉네임/main (개인별 기본 브랜치)
+      ├── 닉네임/week1 (1주차 작업 브랜치)
+      ├── 닉네임/week2 (2주차 작업 브랜치)
+      └── ...
+```   
+### ⚠️ PR(Pull Request) 생성 시 주의사항
+주차별 작업 브랜치(예: 닉네임/week1)에서 작업을 마치고 PR을 올릴 때, Base는 공통 main 브랜치가 아닌 본인의 닉네임/main 브랜치로 지정해 주세요!
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
-```
-
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
-```
+---
+## 💡 Commit Convention
+일관성 있는 기록을 위해 아래의 커밋 메시지 규칙을 준수합니다.
+    
+| Type | Description |
+| :--- | :--- |
+| `feat` | 새로운 기능 추가 |
+| `fix` | 버그 수정 |
+| `refactor` | 리팩토링 (기능 변경 없음) |
+| `docs` | 문서/주석 수정 |
+| `chore` | 빌드 설정, 패키지 관리 등 |
+   
