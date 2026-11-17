@@ -1,11 +1,67 @@
+
 import { Link, useParams } from "@tanstack/react-router";
-import { movies } from "../../data/movies";
+import { useQuery } from "@tanstack/react-query";
+
+import { getMovieDetail } from "../../api/movies/get-movie-detail";
+import { getMovieDetailErrorMessage } from "../../utils/movies/get-movie-detail-error-message";
 import { BookmarkButton } from "../../components/bookmark-button";
 
 export function MovieDetailPage() {
-  const { movieId } = useParams({ from: "/movies/$movieId" });
-  const movie = movies.find((item) => item.id === Number(movieId));
+  const { movieId: movieIdParam } = useParams({
+    from: "/movies/$movieId",
+  });
 
+  // URL에서 가져온 영화 ID를 숫자로 변환
+  const movieId = Number(movieIdParam);
+
+  // 0보다 큰 정수인지 확인
+  const isValidMovieId = Number.isInteger(movieId) && movieId > 0;
+
+  // TanStack Query로 영화 상세 정보 요청
+  const movieDetailQuery = useQuery({
+    queryKey: ["movies", "detail", movieId],
+    queryFn: () => getMovieDetail(movieId),
+    enabled: isValidMovieId,
+    staleTime: 30*1000, // 30초 동안 캐시 유지
+  });
+
+  // 잘못된 영화 ID
+  if (!isValidMovieId) {
+    return (
+      <main className="flex min-h-[60vh] items-center justify-center">
+        <p className="text-lg font-semibold">
+          올바르지 않은 영화 번호예요.
+        </p>
+      </main>
+    );
+  }
+
+  // 로딩 중
+  if (movieDetailQuery.isPending) {
+    return (
+      <main className="flex min-h-[60vh] items-center justify-center">
+        <p className="text-lg font-semibold">
+          영화 정보를 불러오는 중이에요.
+        </p>
+      </main>
+    );
+  }
+
+  // API 요청 오류
+  if (movieDetailQuery.isError) {
+    return (
+      <main className="flex min-h-[60vh] items-center justify-center">
+        <p className="text-lg font-semibold">
+          {getMovieDetailErrorMessage(movieDetailQuery.error)}
+        </p>
+      </main>
+    );
+  }
+
+  // TanStack Query가 반환한 영화 데이터
+  const movie = movieDetailQuery.data;
+
+  // 영화 데이터가 없는 경우
   if (!movie) {
     return (
       <main className="flex min-h-[60vh] items-center justify-center">
@@ -16,16 +72,38 @@ export function MovieDetailPage() {
     );
   }
 
+  // TMDB 장르 배열을 문자열로 변환
+  const genres = movie.genres
+    .map((genre) => genre.name)
+    .join(", ");
+
+  // 상영 시간을 시간과 분으로 변환
+  const runtime =
+    movie.runtime !== null
+      ? `${Math.floor(movie.runtime / 60)}시간 ${movie.runtime % 60}분`
+      : "상영 시간 정보가 없어요.";
+
+  // TMDB 이미지 URL
+  const backdropUrl = movie.backdrop_path
+    ? `https://image.tmdb.org/t/p/original${movie.backdrop_path}`
+    : "";
+
+  const posterUrl = movie.poster_path
+    ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+    : "";
+
   return (
     <main className="min-h-screen bg-gray-50">
       {/* 배경 이미지 영역 */}
       <section className="relative h-[360px] overflow-hidden">
-        <img
-          src={movie.backdropPath}
-          alt=""
-          aria-hidden="true"
-          className="absolute inset-0 h-full w-full object-cover"
-        />
+        {backdropUrl && (
+          <img
+            src={backdropUrl}
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        )}
 
         {/* 배경을 살짝 어둡게 */}
         <div className="absolute inset-0 bg-black/25" />
@@ -49,13 +127,13 @@ export function MovieDetailPage() {
             </h1>
 
             <p className="mt-2 text-sm">
-              {movie.originalTitle}
+              {movie.original_title}
             </p>
 
             <div className="mt-2 flex flex-wrap gap-2 text-sm">
-              <span>{movie.releaseDate}</span>
-              <span>{movie.genres.join(" · ")}</span>
-              <span>{movie.runtime}</span>
+              <span>{movie.release_date.replaceAll("-", ".")}</span>
+              <span>{genres}</span>
+              <span>{runtime}</span>
             </div>
           </div>
         </div>
@@ -65,11 +143,13 @@ export function MovieDetailPage() {
       <section className="mx-auto grid max-w-6xl grid-cols-[180px_1fr_300px] gap-8 px-8 py-6">
         {/* 포스터 */}
         <div>
-          <img
-            src={movie.posterPath}
-            alt={`${movie.title} 포스터`}
-            className="w-full rounded-lg object-cover shadow-md"
-          />
+          {posterUrl && (
+            <img
+              src={posterUrl}
+              alt={`${movie.title} 포스터`}
+              className="w-full rounded-lg object-cover shadow-md"
+            />
+          )}
         </div>
 
         {/* 영화 설명 */}
