@@ -1,8 +1,8 @@
 
-import { useState, type FormEvent } from "react";
+import { useState, type SubmitEvent } from "react";
 import { checkEmailDuplicate } from "../../api/members/check-email-duplicate";
 import { checkNicknameDuplicate } from "../../api/members/check-nickname-duplicate";
-import { signup } from "../../api/members/signup";
+import { useSignupMutation } from "../../hooks/use-signup-mutation";
 
 // 이메일 형식 검사
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -37,8 +37,8 @@ export function SignupPage() {
     nickname: { ...DEFAULT_DUPLICATE_CHECK },
   });
 
-  // 회원가입 요청 진행 상태
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // 회원가입 요청 상태 관리
+  const signupMutation = useSignupMutation();
 
   // 입력값 유효성 검사
   const isEmailValid = EMAIL_REGEX.test(form.email.trim());
@@ -164,32 +164,17 @@ export function SignupPage() {
     }
   };
 
-  // 회원가입 API 요청
-  const handleSubmit = async (
-    e: FormEvent<HTMLFormElement>
-  ) => {
-    e.preventDefault();
+  // 회원가입 API 요청 - useMutation 적용
+  const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
+    event.preventDefault();
 
-    if (!canSubmit || isSubmitting) return;
+    if (!canSubmit || signupMutation.isPending) return;
 
-    setIsSubmitting(true);
-
-    try {
-      const response = await signup({
-        email: form.email.trim(),
-        nickname: form.nickname.trim(),
-        password: form.password,
-      });
-
-      alert(response.message);
-
-      // 로그인 페이지 구현 후 주석 해제
-      // navigate({ to: "/login" });
-    } catch {
-      alert("회원가입에 실패했어요. 다시 시도해 주세요.");
-    } finally {
-      setIsSubmitting(false);
-    }
+    signupMutation.mutate({
+      email: form.email.trim(),
+      nickname: form.nickname.trim(),
+      password: form.password,
+    });
   };
 
   return (
@@ -221,7 +206,7 @@ export function SignupPage() {
                 value={form.email}
                 disabled={
                   duplicateCheck.email.isChecking ||
-                  isSubmitting
+                  signupMutation.isPending
                 }
                 onChange={(e) =>
                   handleChangeField("email", e.target.value)
@@ -234,11 +219,9 @@ export function SignupPage() {
                 disabled={
                   !isEmailValid ||
                   duplicateCheck.email.isChecking ||
-                  isSubmitting
+                  signupMutation.isPending
                 }
-                onClick={() =>
-                  handleCheckDuplicate("email")
-                }
+                onClick={() => handleCheckDuplicate("email")}
                 className="shrink-0 px-3 text-xs font-semibold text-[#4B63E6] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {duplicateCheck.email.isChecking
@@ -277,7 +260,7 @@ export function SignupPage() {
                 value={form.nickname}
                 disabled={
                   duplicateCheck.nickname.isChecking ||
-                  isSubmitting
+                  signupMutation.isPending
                 }
                 onChange={(e) =>
                   handleChangeField("nickname", e.target.value)
@@ -290,11 +273,9 @@ export function SignupPage() {
                 disabled={
                   !isNicknameValid ||
                   duplicateCheck.nickname.isChecking ||
-                  isSubmitting
+                  signupMutation.isPending
                 }
-                onClick={() =>
-                  handleCheckDuplicate("nickname")
-                }
+                onClick={() => handleCheckDuplicate("nickname")}
                 className="shrink-0 px-3 text-xs font-semibold text-[#4B63E6] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {duplicateCheck.nickname.isChecking
@@ -330,7 +311,7 @@ export function SignupPage() {
               type="password"
               placeholder="8자 이상"
               value={form.password}
-              disabled={isSubmitting}
+              disabled={signupMutation.isPending}
               onChange={(e) =>
                 handleChangeField("password", e.target.value)
               }
@@ -363,7 +344,7 @@ export function SignupPage() {
               type="password"
               placeholder="다시 입력"
               value={form.passwordConfirm}
-              disabled={isSubmitting}
+              disabled={signupMutation.isPending}
               onChange={(e) =>
                 handleChangeField(
                   "passwordConfirm",
@@ -383,10 +364,10 @@ export function SignupPage() {
           {/* 가입하기 */}
           <button
             type="submit"
-            disabled={!canSubmit || isSubmitting}
+            disabled={!canSubmit || signupMutation.isPending}
             className="mt-2 h-11 w-full rounded-md bg-[#4B63E6] text-sm font-semibold text-white transition-colors hover:bg-[#3D53D0] disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {isSubmitting ? "가입 중..." : "가입하기"}
+            {signupMutation.isPending ? "가입 중..." : "가입하기"}
           </button>
         </form>
 

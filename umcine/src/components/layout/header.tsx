@@ -1,6 +1,22 @@
+
 import { Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { getMe } from "../../api/members/me";
+import { useAuthStore } from "../../stores/auth-store";
 
 export function Header() {
+  // 저장된 로그인 토큰 가져오기
+  const accessToken = useAuthStore((state) => state.accessToken);
+
+  // 로그인한 사용자 정보 조회
+  const meQuery = useQuery({
+    queryKey: ["members", "me"],
+    queryFn: getMe,
+    enabled: Boolean(accessToken),
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
+
   return (
     <header className="flex h-[72px] items-center justify-between border-b border-gray-200 bg-white px-16">
       <div className="flex items-center gap-12">
@@ -36,12 +52,12 @@ export function Header() {
             검색
           </Link>
 
-          <a
-            href="#"
+          <Link
+            to="/mypage"
             className="text-sm font-medium text-gray-500 no-underline"
           >
             내 정보
-          </a>
+          </Link>
         </nav>
       </div>
 
@@ -58,9 +74,24 @@ export function Header() {
           />
         </button>
 
-        <button className="h-10 cursor-pointer rounded-md border-0 bg-[#4f63e9] px-[18px] text-sm font-semibold text-white">
-          로그인
-        </button>
+        {/* 로그인 상태에 따른 버튼 표시 */}
+        {!accessToken ? (
+          <Link
+            to="/login"
+            className="flex h-10 items-center justify-center rounded-md bg-[#4f63e9] px-[18px] text-sm font-semibold text-white no-underline"
+          >
+            로그인
+          </Link>
+        ) : meQuery.isLoading ? (
+          <span className="h-10 w-24 animate-pulse rounded-lg bg-gray-200" />
+        ) : (
+          <Link
+            to="/mypage"
+            className="flex h-10 items-center justify-center rounded-md bg-[#4f63e9] px-[18px] text-sm font-semibold text-white no-underline"
+          >
+            마이페이지
+          </Link>
+        )}
       </div>
     </header>
   );
