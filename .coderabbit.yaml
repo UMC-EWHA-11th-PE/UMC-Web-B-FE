@@ -3,10 +3,10 @@
 # ============================================================ #
 # 리뷰 언어 설정 (ko-KR, en-US, ja-JP 등)
 language: "ko-KR"
-
+   
 # 실험적/신규 기능 우선 활성화 여부
-early_access: false
-
+early_access: false  
+ 
 # 리뷰 전반에 적용할 AI의 어조 및 페르소나 지침
 tone_instructions: "풀스택 시니어 개발자 관점에서 엄격하게 피드백해야합니다. 또한 모든 피드백에는 반드시 근거가 있어야합니다."
 
@@ -93,13 +93,15 @@ reviews:
   auto_review:
     # PR 생성 시 자동으로 리뷰 시작
     enabled: true
-    # 리뷰 대상 base 브랜치
-    base_branches:
-      - ".*"
     # 기존 PR에 새 커밋이 추가될 경우 증분(Incremental) 변경분만 다시 리뷰
     auto_incremental_review: true
     # 드래프트(Draft) 상태의 PR도 리뷰할지 여부
     drafts: false
+    # 리뷰를 수행할 대상 베이스 브랜치 (지정하지 않으면 모든 브랜치 대상)
+    base_branches:
+      - "main"
+      - "develop"
+      - "feat/**"
     # PR 제목에 특정 키워드가 포함되어 있으면 리뷰 생략
     ignore_title_keywords:
       - "[Deploy]"
