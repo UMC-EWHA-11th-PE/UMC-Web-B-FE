@@ -1,5 +1,7 @@
+"use client";
+
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate, useSearch } from "@tanstack/react-router";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { toMovie } from "../../api/movies/mappers";
 import { searchMovies } from "../../api/movies/search-movies";
@@ -7,15 +9,15 @@ import MovieGrid from "../../components/movies/movie-grid";
 import { useBookmarkStore } from "../../stores/bookmark-store";
 
 function SearchForm({ initialQuery }: { initialQuery: string }) {
-  const navigate = useNavigate({ from: "/search" });
+  const router = useRouter();
   const [searchText, setSearchText] = useState(initialQuery);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const nextQuery = searchText.trim();
-    navigate({
-      search: nextQuery ? { query: nextQuery } : {},
-    });
+    router.push(
+      nextQuery ? `/search?query=${encodeURIComponent(nextQuery)}` : "/search",
+    );
   }
 
   return (
@@ -37,7 +39,7 @@ function SearchForm({ initialQuery }: { initialQuery: string }) {
 }
 
 export function SearchPage() {
-  const { query } = useSearch({ from: "/search" });
+  const query = useSearchParams().get("query");
   const bookmarkedMovieIds = useBookmarkStore(
     (state) => state.bookmarkedMovieIds,
   );

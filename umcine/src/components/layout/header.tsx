@@ -1,4 +1,5 @@
-import { Link } from "@tanstack/react-router";
+"use client";
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { getMe } from "../../api/members/me";
 import { useAuthStore } from "../../stores/auth-store";
@@ -29,7 +30,7 @@ export function Header() {
 
         {!accessToken ? (
           <Link
-            to="/login"
+            href="/login"
             className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white"
           >
             로그인
@@ -38,7 +39,7 @@ export function Header() {
           <span className="h-10 w-24 animate-pulse rounded-lg bg-gray-200" />
         ) : (
           <Link
-            to="/me"
+            href="/me"
             className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white"
           >
             마이페이지

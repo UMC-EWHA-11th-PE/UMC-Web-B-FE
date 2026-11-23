@@ -1,5 +1,8 @@
+"use client";
+
 import { useQuery } from "@tanstack/react-query";
-import { Link, useParams } from "@tanstack/react-router";
+import Link from "next/link";
+import { useParams } from "next/navigation";
 import { getMovieDetail } from "../../api/movies/get-movie-detail";
 import { toMovieFromDetail } from "../../api/movies/mappers";
 import { useBookmarkStore } from "../../stores/bookmark-store";
@@ -7,7 +10,7 @@ import { cn } from "../../utils/cn";
 import { getMovieDetailErrorMessage } from "../../utils/movies/get-movie-detail-error-message";
 
 export function MovieDetailPage() {
-  const { movieId: movieIdParam } = useParams({ from: "/movies/$movieId" });
+  const { movieId: movieIdParam } = useParams<{ movieId: string }>();
   const movieId = Number(movieIdParam);
   const isValidMovieId = Number.isInteger(movieId) && movieId > 0;
 
@@ -26,7 +29,7 @@ export function MovieDetailPage() {
     return (
       <main>
         <p role="alert">올바르지 않은 영화 번호예요.</p>
-        <Link to="/">영화 목록</Link>
+        <Link href="/">영화 목록</Link>
       </main>
     );
   }
@@ -39,7 +42,7 @@ export function MovieDetailPage() {
     return (
       <main>
         <p role="alert">{getMovieDetailErrorMessage(movieDetailQuery.error)}</p>
-        <Link to="/">영화 목록</Link>
+        <Link href="/">영화 목록</Link>
       </main>
     );
   }
@@ -50,7 +53,7 @@ export function MovieDetailPage() {
   return (
     <main>
       <img src={movie.backdropPath} alt="" aria-hidden="true" />
-      <Link to="/">영화 목록</Link>
+      <Link href="/">영화 목록</Link>
       <img src={movie.posterPath} alt={`${movie.title} 포스터`} />
 
       <div className="flex items-center gap-3">

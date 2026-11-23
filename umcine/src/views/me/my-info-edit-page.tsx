@@ -1,4 +1,6 @@
-import { Link } from "@tanstack/react-router";
+"use client";
+
+import Link from "next/link";
 import { useState, type FormEvent } from "react";
 
 const INPUT_CLASS =
@@ -72,7 +74,7 @@ export function MyInfoEditPage() {
           저장하기
         </button>
 
-        <Link to="/me" className="text-center text-xs font-bold text-gray-500">
+        <Link href="/me" className="text-center text-xs font-bold text-gray-500">
           취소
         </Link>
       </form>
