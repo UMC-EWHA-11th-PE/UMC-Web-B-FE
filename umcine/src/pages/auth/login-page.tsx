@@ -1,4 +1,8 @@
 import { useState } from "react";
+import { useLoginMutation } from "../../hooks/use-login-mutation";
+
+// 이메일 형식 검사 (예: example@email.com)
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // 로그인 폼의 초기 입력값
 const DEFAULT_FORM = {
@@ -10,6 +14,9 @@ export function LoginPage() {
   // 이메일과 비밀번호 입력값 관리
   const [form, setForm] = useState(DEFAULT_FORM);
 
+  // 로그인 API 요청 상태 관리 (8주차 추가)
+  const loginMutation = useLoginMutation();
+
   // 입력값이 변경되면 해당 필드만 업데이트
   const handleChangeField = (key: keyof typeof DEFAULT_FORM, value: string) => {
     setForm((prev) => ({
@@ -18,17 +25,21 @@ export function LoginPage() {
     }));
   };
 
-  // 이메일과 비밀번호를 모두 입력해야 로그인 가능
-  const canSubmit = form.email.trim().length > 0 && form.password.length > 0;
+  // 이메일 형식이 올바르고 비밀번호를 입력해야 로그인 가능
+  const canSubmit =
+    EMAIL_REGEX.test(form.email.trim()) && form.password.length > 0;
 
-  // 로그인 버튼 클릭 시 입력값 확인
+  // 로그인 버튼 클릭 시 실제 로그인 API 호출
   const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (!canSubmit) return;
+    if (!canSubmit || loginMutation.isPending) return;
 
-    // 이번 미션에서는 실제 로그인 API를 호출하지 않음
-    alert("로그인 성공!");
+    // 입력한 이메일과 비밀번호로 POST /auth/login 요청
+    loginMutation.mutate({
+      email: form.email.trim(),
+      password: form.password,
+    });
   };
 
   return (
@@ -69,13 +80,13 @@ export function LoginPage() {
           />
         </div>
 
-        {/* 두 입력값이 모두 있어야 로그인 버튼 활성화 */}
+        {/* 입력값이 없거나 로그인 요청 중이면 버튼 비활성화 */}
         <button
           type="submit"
-          disabled={!canSubmit}
+          disabled={!canSubmit || loginMutation.isPending}
           className="w-full rounded-lg bg-blue-600 p-3 font-semibold text-white disabled:cursor-not-allowed disabled:bg-gray-300"
         >
-          로그인
+          {loginMutation.isPending ? "로그인 중..." : "로그인"}
         </button>
       </form>
     </main>

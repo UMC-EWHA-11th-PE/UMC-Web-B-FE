@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { checkEmailDuplicate } from "../../api/members/check-email-duplicate";
 import { checkNicknameDuplicate } from "../../api/members/check-nickname-duplicate";
-import { signup } from "../../api/members/signup";
+import { useSignupMutation } from "../../hooks/use-signup-mutation";
 
 // 이메일 형식 검사 (문자@문자.문자)
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -35,8 +35,8 @@ export function SignupPage() {
   // 회원가입 입력값을 하나의 객체로 관리
   const [form, setForm] = useState(DEFAULT_FORM);
 
-  // 회원가입 API 요청이 진행 중인지 관리
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // useMutation으로 회원가입 요청 상태 관리
+  const signupMutation = useSignupMutation();
 
   // 이메일과 닉네임의 중복 확인 결과를 각각 관리
   const [duplicateCheck, setDuplicateCheck] = useState({
@@ -148,36 +148,19 @@ export function SignupPage() {
   };
 
   // 회원가입 폼 제출 및 API 요청
-  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
     // 폼 제출 시 페이지 새로고침 방지
     e.preventDefault();
 
     // 입력값이나 중복 확인이 유효하지 않거나 이미 요청 중이면 중단
-    if (!canSubmit || isSubmitting) return;
+    if (!canSubmit || signupMutation.isPending) return;
 
-    // 회원가입 요청 시작
-    setIsSubmitting(true);
-
-    try {
-      // Spring Boot 서버에 회원가입 POST 요청
-      const response = await signup({
-        email: form.email.trim(),
-        nickname: form.nickname.trim(),
-        password: form.password,
-      });
-
-      // 서버에서 받은 회원가입 결과 메시지 표시
-      alert(response.message);
-
-      // 로그인 페이지 구현 후 이동 기능 추가 예정
-      // navigate({ to: "/login" });
-    } catch {
-      // 회원가입 요청 실패 시 오류 메시지 표시
-      alert("회원가입에 실패했어요. 다시 시도해 주세요.");
-    } finally {
-      // 성공 여부와 관계없이 요청 상태 종료
-      setIsSubmitting(false);
-    }
+    // Spring Boot 서버에 회원가입 POST 요청
+    signupMutation.mutate({
+      email: form.email.trim(),
+      nickname: form.nickname.trim(),
+      password: form.password,
+    });
   };
 
   return (
@@ -188,8 +171,6 @@ export function SignupPage() {
         className="w-full max-w-md space-y-5 rounded-xl bg-white p-8 shadow-md"
       >
         <h1 className="mb-8 text-center text-2xl font-bold">회원가입</h1>
-
-        {/* 이메일 입력 */}
 
         {/* 이메일 입력 */}
         <div>
@@ -233,8 +214,6 @@ export function SignupPage() {
             </p>
           )}
         </div>
-
-        {/* 닉네임 입력 */}
 
         {/* 닉네임 입력 */}
         <div>
@@ -324,10 +303,10 @@ export function SignupPage() {
         {/* 입력값과 중복 확인을 통과해야 회원가입 가능 */}
         <button
           type="submit"
-          disabled={!canSubmit || isSubmitting}
+          disabled={!canSubmit || signupMutation.isPending}
           className="w-full rounded-lg bg-blue-600 p-3 font-semibold text-white disabled:cursor-not-allowed disabled:bg-gray-300"
         >
-          {isSubmitting ? "가입 중" : "가입하기"}
+          {signupMutation.isPending ? "가입 중" : "가입하기"}
         </button>
       </form>
     </main>
