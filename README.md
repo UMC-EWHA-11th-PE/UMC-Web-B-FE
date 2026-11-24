@@ -12,7 +12,7 @@ UMC EWHA 11th PE Web B 프론트엔드 레포지토리입니다.
 | 제이드 | 서영 | [@Jade0728](https://github.com/Jade0728) |
 | 조던 | 김재희 | [@goodispotato](https://github.com/goodispotato) |  
 
----
+---  
 
 ## 🌳 Branch 구조
 

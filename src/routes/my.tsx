@@ -1,8 +1,13 @@
+
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useEffect, type FormEvent } from "react";
-import { useBookmarkStore } from "../utils/bookmark-storage";
+import { useState, useEffect, useMemo, type FormEvent } from "react";
 import { useUpdateMeMutation } from "../hooks/use-update-me-mutation";
 import { checkNicknameDuplicate } from "../api/members/check-nickname-duplicate";
+import { useGetFavoritesQuery } from "../hooks/use-get-favorites-query";
+import { useGetMemberRatingsQuery } from "../hooks/use-get-member-ratings-query";
+import { useUpdateRatingMutation } from "../hooks/use-update-rating-mutation";
+import { useDeleteRatingMutation } from "../hooks/use-delete-rating-mutation";
+
 
 const TMDB_API_KEY = import.meta.env.VITE_TMDB_ACCESS_TOKEN;
 const TMDB_IMAGE_URL = "https://image.tmdb.org/t/p/w500";
@@ -17,14 +22,10 @@ interface Movie {
 function MyPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [nickname, setNickname] = useState("gs0428");
-
   const [originalNickname, setOriginalNickname] = useState("gs0428");
-
   const [isNicknameAvailable, setIsNicknameAvailable] =
     useState<boolean | null>(null);
-
   const [checkedNickname, setCheckedNickname] = useState("");
-
   const [email] = useState("gwangsoo@cinemalab.kr");
 
   const updateMeMutation = useUpdateMeMutation();
@@ -32,13 +33,82 @@ function MyPage() {
   const [movies, setMovies] = useState<Movie[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-
   const [page, setPage] = useState(1);
 
-  // Zustand에 저장된 실제 북마크 영화 ID
-  const bookmarkedMovieIds = useBookmarkStore(
-    (state) => state.bookmarkedMovieIds
+  // 서버에서 즐겨찾기 목록 조회
+  const {
+    data: favorites = [],
+    isLoading: isFavoritesLoading,
+    isError: isFavoritesError,
+  } = useGetFavoritesQuery();
+
+  // 즐겨찾기 목록에서 영화 ID만 추출
+  const bookmarkedMovieIds = useMemo(
+    () => favorites.map((favorite) => favorite.movieId),
+    [favorites]
   );
+
+  // 서버에서 평점 목록 조회
+  // 1은 Postman에서 테스트한 회원 ID
+  const {
+    data: ratings = [],
+    isLoading: isRatingsLoading,
+    isError: isRatingsError,
+  } = useGetMemberRatingsQuery();
+
+  const updateRatingMutation = useUpdateRatingMutation();
+const deleteRatingMutation = useDeleteRatingMutation();
+
+// 현재 수정 중인 평점 ID
+const [editingRatingId, setEditingRatingId] = useState<number | null>(null);
+const [editScore, setEditScore] = useState(0);
+const [editComment, setEditComment] = useState("");
+
+const handleEditClick = (rating: (typeof ratings)[number]) => {
+  setEditingRatingId(rating.ratingId);
+  setEditScore(rating.score);
+  setEditComment(rating.comment);
+};
+
+const handleUpdateRating = (ratingId: number, movieId: number) => {
+  if (editScore < 1 || editScore > 5) {
+    alert("평점은 1~5점으로 선택해주세요.");
+    return;
+  }
+
+  updateRatingMutation.mutate(
+    {
+      ratingId,
+      data: {
+        movieId,
+        score: editScore,
+        comment: editComment,
+      },
+    },
+    {
+      onSuccess: () => {
+        setEditingRatingId(null);
+        alert("평점이 수정되었습니다.");
+      },
+      onError: () => {
+        alert("평점 수정에 실패했습니다.");
+      },
+    },
+  );
+};
+
+const handleDeleteRating = (ratingId: number) => {
+  if (!window.confirm("이 평점을 삭제하시겠습니까?")) return;
+
+  deleteRatingMutation.mutate(ratingId, {
+    onSuccess: () => {
+      alert("평점이 삭제되었습니다.");
+    },
+    onError: () => {
+      alert("평점 삭제에 실패했습니다.");
+    },
+  });
+};
 
   const moviesPerPage = 3;
   const totalPages = Math.ceil(movies.length / moviesPerPage);
@@ -184,6 +254,7 @@ function MyPage() {
       }
     );
   };
+
   // 회원 탈퇴
   const handleWithdraw = () => {
     if (window.confirm("정말 회원 탈퇴하시겠습니까?")) {
@@ -249,43 +320,42 @@ function MyPage() {
               </p>
             </div>
 
-            
             <form onSubmit={handleSubmit}>
               <label style={labelStyle}>닉네임</label>
 
-            <div style={{ display: "flex", gap: "8px" }}>
-              <input
-                value={nickname}
-                onChange={(e) => {
-                  setNickname(e.target.value);
-                  setIsNicknameAvailable(null);
-                  setCheckedNickname("");
-                }}
-                style={{ ...inputStyle, flex: 1 }}
-              />
+              <div style={{ display: "flex", gap: "8px" }}>
+                <input
+                  value={nickname}
+                  onChange={(e) => {
+                    setNickname(e.target.value);
+                    setIsNicknameAvailable(null);
+                    setCheckedNickname("");
+                  }}
+                  style={{ ...inputStyle, flex: 1 }}
+                />
 
-              <button
-                type="button"
-                onClick={handleNicknameCheck}
-                style={blueButtonStyle}
-              >
-                중복 확인
-              </button>
-            </div>
+                <button
+                  type="button"
+                  onClick={handleNicknameCheck}
+                  style={blueButtonStyle}
+                >
+                  중복 확인
+                </button>
+              </div>
 
-            {isNicknameAvailable === true &&
-              checkedNickname === nickname.trim() && (
-                <p style={{ color: "#16a34a", fontSize: "12px" }}>
-                  사용 가능한 닉네임입니다.
-                </p>
-              )}
+              {isNicknameAvailable === true &&
+                checkedNickname === nickname.trim() && (
+                  <p style={{ color: "#16a34a", fontSize: "12px" }}>
+                    사용 가능한 닉네임입니다.
+                  </p>
+                )}
 
-            {isNicknameAvailable === false &&
-              checkedNickname === nickname.trim() && (
-                <p style={{ color: "#e34b4b", fontSize: "12px" }}>
-                  이미 사용 중인 닉네임입니다.
-                </p>
-              )}
+              {isNicknameAvailable === false &&
+                checkedNickname === nickname.trim() && (
+                  <p style={{ color: "#e34b4b", fontSize: "12px" }}>
+                    이미 사용 중인 닉네임입니다.
+                  </p>
+                )}
 
               <label
                 style={{
@@ -316,7 +386,6 @@ function MyPage() {
               >
                 {updateMeMutation.isPending ? "저장 중..." : "변경사항 저장"}
               </button>
-                변경사항 저장
             </form>
           </div>
 
@@ -390,9 +459,13 @@ function MyPage() {
           <section>
             <h3 style={sectionTitleStyle}>내 즐겨찾기</h3>
 
-            {isLoading ? (
+            {isLoading || isFavoritesLoading ? (
               <p style={messageStyle}>
                 즐겨찾기 영화를 불러오는 중입니다...
+              </p>
+            ) : isFavoritesError ? (
+              <p style={{ ...messageStyle, color: "#e34b4b" }}>
+                즐겨찾기 목록을 불러오지 못했습니다.
               </p>
             ) : error ? (
               <p style={{ ...messageStyle, color: "#e34b4b" }}>
@@ -496,6 +569,125 @@ function MyPage() {
                   </div>
                 )}
               </>
+            )}
+          </section>
+
+          {/* 내 평점 */}
+          <section style={{ marginTop: "35px" }}>
+            <h3 style={sectionTitleStyle}>내 평점</h3>
+
+            {isRatingsLoading ? (
+              <p style={messageStyle}>
+                평점 목록을 불러오는 중입니다...
+              </p>
+            ) : isRatingsError ? (
+              <p style={{ ...messageStyle, color: "#e34b4b" }}>
+                평점 목록을 불러오지 못했습니다.
+              </p>
+            ) : ratings.length === 0 ? (
+              <p style={messageStyle}>
+                아직 작성한 평점이 없습니다.
+              </p>
+            ) : (
+              ratings.map((rating) => (
+                <div
+                  key={rating.ratingId}
+                  style={{
+                    padding: "15px",
+                    marginTop: "12px",
+                    border: "1px solid #e2e5eb",
+                    borderRadius: "8px",
+                    backgroundColor: "#fff",
+                  }}
+                >
+                  <strong>영화 번호: {rating.movieId}</strong>
+
+                  {editingRatingId === rating.ratingId ? (
+                    <>
+                      <p>평점 수정</p>
+
+                      <div style={{ display: "flex", gap: "5px" }}>
+                        {[1, 2, 3, 4, 5].map((score) => (
+                          <button
+                            key={score}
+                            type="button"
+                            onClick={() => setEditScore(score)}
+                            style={{
+                              border: "none",
+                              background: "transparent",
+                              color: editScore >= score ? "#f5b400" : "#aaa",
+                              fontSize: "24px",
+                              cursor: "pointer",
+                            }}
+                          >
+                            ★
+                          </button>
+                        ))}
+                      </div>
+
+                      <textarea
+                        value={editComment}
+                        onChange={(e) => setEditComment(e.target.value)}
+                        placeholder="감상평을 입력해주세요."
+                        style={{
+                          width: "100%",
+                          minHeight: "70px",
+                          marginTop: "10px",
+                          padding: "10px",
+                          boxSizing: "border-box",
+                        }}
+                      />
+
+                      <div style={{ display: "flex", gap: "8px", marginTop: "10px" }}>
+                        <button
+                          type="button"
+                          disabled={updateRatingMutation.isPending}
+                          onClick={() =>
+                            handleUpdateRating(rating.ratingId, rating.movieId)
+                          }
+                          style={blueButtonStyle}
+                        >
+                          {updateRatingMutation.isPending ? "저장 중..." : "저장"}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setEditingRatingId(null)}
+                          style={pageArrowStyle}
+                        >
+                          취소
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <p>내 평점: {rating.score}점</p>
+                      <p>{rating.comment}</p>
+
+                      <small>작성일: {rating.createdAt}</small>
+
+                      <div style={{ display: "flex", gap: "8px", marginTop: "12px" }}>
+                        <button
+                          type="button"
+                          onClick={() => handleEditClick(rating)}
+                          style={blueButtonStyle}
+                        >
+                          수정
+                        </button>
+
+                        <button
+                          type="button"
+                          disabled={deleteRatingMutation.isPending}
+                          onClick={() => handleDeleteRating(rating.ratingId)}
+                          style={withdrawButtonStyle}
+                        >
+                          삭제
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ))
             )}
           </section>
         </>

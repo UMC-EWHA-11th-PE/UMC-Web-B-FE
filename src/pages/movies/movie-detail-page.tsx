@@ -1,15 +1,22 @@
 
+import { useState } from "react";
 import { Link, useParams } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+
 import { getMovieDetail } from "../../api/movies/get-movie-detail";
 import type { Movie } from "../../types/movie";
+
 import {
   getTmdbPosterUrl,
   getTmdbBackdropUrl,
 } from "../../utils/movies/tmdb-image";
-import { useBookmarkStore } from "../../utils/bookmark-storage";
+
 import { getMovieDetailErrorMessage } from "../../utils/movies/get-movie-detail-error-message";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+
+import { useGetFavoritesQuery } from "../../hooks/use-get-favorites-query";
+import { useToggleFavoriteMutation } from "../../hooks/use-toggle-favorite-mutation";
+import { useCreateRatingMutation } from "../../hooks/use-create-rating-mutation";
 
 export function MovieDetailPage() {
   const { movieId: movieIdParam } = useParams({
@@ -20,12 +27,25 @@ export function MovieDetailPage() {
   const isValidMovieId =
     Number.isInteger(movieId) && movieId > 0;
 
-  const bookmarkedMovieIds = useBookmarkStore(
-    (state) => state.bookmarkedMovieIds,
-  );
+  // 평점 입력 상태
+  const [score, setScore] = useState(0);
+  const [comment, setComment] = useState("");
 
-  const toggleBookmark = useBookmarkStore(
-    (state) => state.toggleBookmark,
+  // 즐겨찾기 목록 조회
+  const {
+    data: favorites = [],
+    isLoading: isFavoritesLoading,
+  } = useGetFavoritesQuery();
+
+  // 즐겨찾기 등록 및 삭제
+  const toggleFavoriteMutation = useToggleFavoriteMutation();
+
+  // 평점 등록
+  const createRatingMutation = useCreateRatingMutation();
+
+  // 서버에서 받은 즐겨찾기 영화 ID
+  const bookmarkedMovieIds = favorites.map(
+    (favorite) => favorite.movieId,
   );
 
   const movieDetailQuery = useQuery({
@@ -151,26 +171,77 @@ export function MovieDetailPage() {
 
             <button
               className="bookmark-detail-button"
-              onClick={() => toggleBookmark(movie.id)}
+              onClick={() =>
+                toggleFavoriteMutation.mutate({
+                  movieId: movie.id,
+                  isBookmarked,
+                })
+              }
+              disabled={
+                isFavoritesLoading ||
+                toggleFavoriteMutation.isPending
+              }
             >
-              {isBookmarked ? "북마크 해제" : "+ 북마크"}
+              {toggleFavoriteMutation.isPending
+                ? "처리 중..."
+                : isBookmarked
+                  ? "북마크 해제"
+                  : "+ 북마크"}
             </button>
           </div>
         </div>
 
         <aside className="rating-box">
           <h3>내 평점</h3>
+
           <div className="rating-stars">
-            <button>☆</button>
-            <button>☆</button>
-            <button>☆</button>
-            <button>☆</button>
-            <button>☆</button>
+            {[1, 2, 3, 4, 5].map((star) => (
+              <button
+                key={star}
+                type="button"
+                onClick={() => setScore(star)}
+              >
+                {score >= star ? "★" : "☆"}
+              </button>
+            ))}
           </div>
-          <button className="rating-save-button">평점 저장</button>
+
+          <p>선택한 점수: {score}점</p>
+
+          <textarea
+            value={comment}
+            onChange={(event) => setComment(event.target.value)}
+            placeholder="영화 감상평을 입력해 주세요."
+          />
+
+          <button
+            className="rating-save-button"
+            disabled={
+              score === 0 || createRatingMutation.isPending
+            }
+            onClick={() => {
+              createRatingMutation.mutate({
+                movieId: movie.id,
+                score,
+                comment,
+              });
+            }}
+          >
+            {createRatingMutation.isPending
+              ? "저장 중..."
+              : "평점 저장"}
+          </button>
+
+          {createRatingMutation.isSuccess && (
+            <p>평점이 등록되었습니다!</p>
+          )}
+
+          {createRatingMutation.isError && (
+            <p>평점 등록에 실패했습니다.</p>
+          )}
         </aside>
       </section>
-      
+
       <ReactQueryDevtools initialIsOpen={true} />
     </main>
   );

@@ -6,8 +6,12 @@ export const authApi = apiClient.extend({
     beforeRequest: [
       ({ request }) => {
         const accessToken = useAuthStore.getState().accessToken;
+
         if (accessToken) {
-          request.headers.set("Authorization", `Bearer ${accessToken}`);
+          request.headers.set(
+            "Authorization",
+            `Bearer ${accessToken}`,
+          );
         }
       },
     ],
