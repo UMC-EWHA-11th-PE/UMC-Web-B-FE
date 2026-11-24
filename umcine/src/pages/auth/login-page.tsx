@@ -1,5 +1,8 @@
 import { Link } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
+import { useLoginMutation } from "../../hooks/use-login-mutation";
+import { useState } from "react";
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const INPUT_CLASS =
   "w-full border border-gray-200 bg-white px-3 py-3 text-sm outline-none placeholder:text-gray-400 focus:border-blue-600";
@@ -7,11 +10,18 @@ const INPUT_CLASS =
 export function LoginPage() {
   const [form, setForm] = useState({ email: "", password: "" });
 
-  const canSubmit = form.email.trim().length > 0 && form.password.length > 0;
+  const loginMutation = useLoginMutation();
+  const canSubmit =
+    EMAIL_REGEX.test(form.email.trim()) && form.password.length > 0;
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    // 로그인 API 연동은 8주차에서 진행
+  const handleSubmit = (event: React.SubmitEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!canSubmit || loginMutation.isPending) return;
+
+    loginMutation.mutate({
+      email: form.email.trim(),
+      password: form.password,
+    });
   };
 
   return (
@@ -57,12 +67,8 @@ export function LoginPage() {
           />
         </div>
 
-        <button
-          type="submit"
-          disabled={!canSubmit}
-          className="w-full rounded-lg bg-blue-600 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-blue-300"
-        >
-          로그인
+        <button type="submit" disabled={!canSubmit || loginMutation.isPending}>
+          {loginMutation.isPending ? "로그인 중" : "로그인"}
         </button>
 
         <p className="text-center text-xs text-gray-500">
