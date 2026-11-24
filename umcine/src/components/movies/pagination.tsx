@@ -1,3 +1,5 @@
+"use client";
+
 // 부모 컴포넌트에서 전달받을 데이터의 타입
 interface PaginationProps {
   page: number;

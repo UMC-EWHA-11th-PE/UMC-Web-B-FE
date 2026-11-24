@@ -1,3 +1,5 @@
+"use client";
+
 import { useBookmarkStore } from "../stores/bookmark-store";
 import { useAuthStore } from "../stores/auth-store";
 import { useFavoriteQuery } from "../hooks/use-favorite-query";
