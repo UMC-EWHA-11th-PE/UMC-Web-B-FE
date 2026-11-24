@@ -1,6 +1,7 @@
 import { Link, useParams } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { getMovieDetailErrorMessage } from "../../utils/movies/get-movie-detail-error-message";
+import { MovieRatingSection } from "../../components/movies/movie-rating-section";
 
 // 공통으로 정의한 영화 Query 설정 가져오기
 import { movieQueries } from "../../api/movies/movie-queries";
@@ -152,10 +153,15 @@ export function MovieDetailPage() {
 
             {/* 기존 즐겨찾기 버튼 위치에 Zustand 북마크 버튼 연결 */}
             <div className="mt-6">
-              <BookmarkButton movieId={movie.id} />
+              <BookmarkButton movieId={movie.id} movieTitle={movie.title} />
             </div>
           </div>
         </div>
+      </section>
+
+      {/* 현재 영화에 대한 평점 등록·수정·삭제 */}
+      <section className="mx-auto max-w-6xl px-6 pb-8">
+        <MovieRatingSection movieId={movie.id} />
       </section>
     </main>
   );

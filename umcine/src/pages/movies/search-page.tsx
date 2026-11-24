@@ -169,7 +169,10 @@ export function SearchPage() {
 
                             {/* 기존 Zustand 북마크 기능 유지 */}
                             <div className="mt-3">
-                              <BookmarkButton movieId={movie.id} />
+                              <BookmarkButton
+                                movieId={movie.id}
+                                movieTitle={movie.title}
+                              />
                             </div>
                           </div>
                         </li>

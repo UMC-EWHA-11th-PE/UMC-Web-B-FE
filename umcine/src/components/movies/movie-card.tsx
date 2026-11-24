@@ -42,7 +42,11 @@ export default function MovieCard({ movie }: MovieCardProps) {
         </Link>
 
         {/* 기존 Zustand 북마크 기능 유지 */}
-        <BookmarkButton movieId={movie.id} className="absolute right-3 top-3" />
+        <BookmarkButton
+          movieId={movie.id}
+          movieTitle={movie.title}
+          className="absolute right-3 top-3"
+        />
       </div>
 
       {/* TMDB API에서 받아온 영화 제목 */}
