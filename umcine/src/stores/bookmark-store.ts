@@ -23,6 +23,7 @@ export const useBookmarkStore = create<BookmarkStore>()(
       partialize: (state) => ({
         bookmarkedMovieIds: state.bookmarkedMovieIds,
       }),
+      skipHydration: true,
     },
   ),
 );

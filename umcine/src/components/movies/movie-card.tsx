@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import Link from "next/link";
 import type { Movie } from "../../types/movie";
 import { cn } from "../../utils/cn";
 
@@ -11,8 +11,7 @@ export default function MovieCard({ movie, onToggleBookmark }: MovieCardProps) {
   return (
     <article className="relative">
       <Link
-        to="/movies/$movieId"
-        params={{ movieId: String(movie.id) }}
+        href={`/movies/${movie.id}`}
         className="block text-inherit no-underline"
       >
         <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-gray-300">
@@ -35,7 +34,11 @@ export default function MovieCard({ movie, onToggleBookmark }: MovieCardProps) {
         onClick={() => onToggleBookmark(movie.id)}
       >
         <img
-          src={movie.isBookmarked ? "/icons/bookmark.svg" : "/icons/bookmark-outline.svg"}
+          src={
+            movie.isBookmarked
+              ? "/icons/bookmark.svg"
+              : "/icons/bookmark-outline.svg"
+          }
           alt=""
         />
       </button>

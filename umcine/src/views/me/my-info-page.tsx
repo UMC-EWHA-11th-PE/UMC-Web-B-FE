@@ -1,4 +1,6 @@
-import { Link } from "@tanstack/react-router";
+"use client";
+
+import Link from "next/link";
 
 // 더미 데이터
 const MY_INFO = {
@@ -27,7 +29,7 @@ export function MyInfoPage() {
         </div>
 
         <Link
-          to="/me/edit"
+          href="/me/edit"
           className="w-full rounded-lg bg-blue-600 py-3 text-center text-sm font-semibold text-white"
         >
           수정하기
