@@ -1,3 +1,5 @@
+"use client";
+
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
@@ -20,8 +22,11 @@ export const useAuthStore = create<AuthStore>()(
       // localStorage에 저장할 이름
       name: "umcine-auth-store",
 
-      // 브라우저 localStorage에 JSON 형태로 저장
+      // 브라우저에서만 localStorage에 접근
       storage: createJSONStorage(() => localStorage),
+
+      // 서버 렌더링 중에는 저장된 상태를 복원하지 않음
+      skipHydration: true,
 
       // accessToken만 저장하도록 설정
       partialize: (state) => ({

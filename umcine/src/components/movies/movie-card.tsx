@@ -1,4 +1,6 @@
-import { Link } from "@tanstack/react-router";
+"use client";
+
+import Link from "next/link";
 
 // 기존 Movie 타입 대신 TMDB 영화 목록 타입 사용
 import type { TmdbMovieListItem } from "../../api/movies/models";
@@ -23,8 +25,8 @@ export default function MovieCard({ movie }: MovieCardProps) {
       <div className="relative aspect-2/3 w-full overflow-hidden rounded-lg bg-[#eeeeee]">
         <Link
           // 영화를 클릭하면 해당 영화 ID의 상세 페이지로 이동
-          to="/movies/$movieId"
-          params={{ movieId: String(movie.id) }}
+          // Next.js에서는 href에 동적 경로를 직접 작성
+          href={`/movies/${movie.id}`}
           className="block h-full w-full"
         >
           {/* 포스터가 있으면 이미지를 표시하고, 없으면 안내 문구 표시 */}
@@ -41,7 +43,7 @@ export default function MovieCard({ movie }: MovieCardProps) {
           )}
         </Link>
 
-        {/* 기존 Zustand 북마크 기능 유지 */}
+        {/* 기존 북마크 기능 유지 */}
         <BookmarkButton
           movieId={movie.id}
           movieTitle={movie.title}

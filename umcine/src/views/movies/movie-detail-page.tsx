@@ -1,4 +1,7 @@
-import { Link, useParams } from "@tanstack/react-router";
+"use client";
+
+import Link from "next/link";
+import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { getMovieDetailErrorMessage } from "../../utils/movies/get-movie-detail-error-message";
 import { MovieRatingSection } from "../../components/movies/movie-rating-section";
@@ -15,11 +18,9 @@ import {
 import { BookmarkButton } from "../../components/bookmark-button";
 
 export function MovieDetailPage() {
-  // URL에서 영화 ID 가져오기
+  // Next.js의 useParams로 URL에서 영화 ID 가져오기
   // 예: /movies/550 → movieId = "550"
-  const { movieId } = useParams({
-    from: "/movies/$movieId",
-  });
+  const { movieId } = useParams<{ movieId: string }>();
 
   // URL에서 가져온 문자열 ID를 숫자로 변환
   const numericMovieId = Number(movieId);
@@ -101,7 +102,7 @@ export function MovieDetailPage() {
         <div className="absolute inset-0 bg-black/50" />
 
         <div className="relative mx-auto flex h-full max-w-6xl flex-col justify-between px-6 py-8 text-white">
-          <Link to="/" className="w-fit text-sm font-medium text-white">
+          <Link href="/" className="w-fit text-sm font-medium text-white">
             ← 영화 목록
           </Link>
 
@@ -151,7 +152,7 @@ export function MovieDetailPage() {
               {movie.overview || "등록된 줄거리가 없어요."}
             </p>
 
-            {/* 기존 즐겨찾기 버튼 위치에 Zustand 북마크 버튼 연결 */}
+            {/* 기존 즐겨찾기 버튼 유지 */}
             <div className="mt-6">
               <BookmarkButton movieId={movie.id} movieTitle={movie.title} />
             </div>

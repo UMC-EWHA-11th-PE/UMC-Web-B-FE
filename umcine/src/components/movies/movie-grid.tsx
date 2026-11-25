@@ -1,3 +1,5 @@
+"use client";
+
 // 기존 Movie 타입 대신 TMDB API에서 사용하는 영화 목록 타입 가져오기
 import type { TmdbMovieListItem } from "../../api/movies/models";
 import MovieCard from "./movie-card";

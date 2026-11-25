@@ -1,13 +1,31 @@
-// <a>는 일반적인 웹 링크이고,
-// Link는 TanStack Router에게 페이지 이동을 맡기는 컴포넌트
-// 즉 React 앱 자체를 유지하면서: / -> /search 처럼 화면 바꾸는거 가능
+"use client";
 
-import { Link } from "@tanstack/react-router";
+// <a>는 일반적인 웹 링크이고,
+// Link는 Next.js에게 페이지 이동을 맡기는 컴포넌트
+// 즉 React 앱 자체를 유지하면서 / -> /search처럼 화면 변경 가능
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getMe } from "../../api/members/me";
 import { useAuthStore } from "../../stores/auth-store";
 
 export function Header() {
+  // 현재 URL 경로 확인
+  const pathname = usePathname();
+
+  // 현재 경로에 따라 메뉴 스타일 변경
+  const getNavClassName = (path: string) => {
+    const isActive =
+      path === "/"
+        ? pathname === "/"
+        : pathname === path || pathname.startsWith(`${path}/`);
+
+    return isActive
+      ? "text-sm font-semibold text-[#111111] underline underline-offset-8"
+      : "text-sm text-[#666666] no-underline";
+  };
+
   // Zustand에 저장된 JWT 확인
   const accessToken = useAuthStore((state) => state.accessToken);
   const setAccessToken = useAuthStore((state) => state.setAccessToken);
@@ -28,6 +46,7 @@ export function Header() {
   // 로그아웃 시 JWT와 기존 회원 정보 캐시 삭제
   const handleLogout = () => {
     setAccessToken(null);
+
     queryClient.removeQueries({
       queryKey: ["members", "me"],
     });
@@ -47,7 +66,7 @@ export function Header() {
         <div className="flex items-center gap-12">
           <Link
             className="flex items-center gap-2 text-xl font-bold text-[#111111] no-underline"
-            to="/"
+            href="/"
           >
             <img className="h-7 w-7" src="/icons/movie.svg" alt="" />
             <span>UMCine</span>
@@ -55,45 +74,17 @@ export function Header() {
 
           <nav className="flex items-center gap-8">
             {/* 현재 영화 페이지일 때만 밑줄 표시 */}
-            <Link
-              to="/"
-              activeOptions={{ exact: true }}
-              activeProps={{
-                className:
-                  "text-sm font-semibold text-[#111111] underline underline-offset-8",
-              }}
-              inactiveProps={{
-                className: "text-sm text-[#666666] no-underline",
-              }}
-            >
+            <Link href="/" className={getNavClassName("/")}>
               영화
             </Link>
 
             {/* 현재 검색 페이지일 때만 밑줄 표시 */}
-            <Link
-              to="/search"
-              activeProps={{
-                className:
-                  "text-sm font-semibold text-[#111111] underline underline-offset-8",
-              }}
-              inactiveProps={{
-                className: "text-sm text-[#666666] no-underline",
-              }}
-            >
+            <Link href="/search" className={getNavClassName("/search")}>
               검색
             </Link>
 
-            {/* 현재 내 정보 페이지일 때만 밑줄 표시 */}
-            <Link
-              to="/my-page"
-              activeProps={{
-                className:
-                  "text-sm font-semibold text-[#111111] underline underline-offset-8",
-              }}
-              inactiveProps={{
-                className: "text-sm text-[#666666] no-underline",
-              }}
-            >
+            {/* 현재 마이페이지일 때만 밑줄 표시 */}
+            <Link href="/my-page" className={getNavClassName("/my-page")}>
               마이페이지
             </Link>
           </nav>
@@ -101,7 +92,7 @@ export function Header() {
 
         <div className="flex items-center gap-3">
           <Link
-            to="/search"
+            href="/search"
             aria-label="검색"
             className="flex h-10 w-10 items-center justify-center rounded-lg border border-[#dddddd] bg-white"
           >
@@ -128,7 +119,7 @@ export function Header() {
             </>
           ) : (
             <Link
-              to="/login"
+              href="/login"
               className="flex h-10 items-center rounded-md bg-blue-600 px-[18px] text-sm font-semibold text-white no-underline"
             >
               로그인

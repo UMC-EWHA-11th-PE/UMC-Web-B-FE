@@ -1,9 +1,11 @@
+"use client";
+
 import { useMutation } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
+import { useRouter } from "next/navigation";
 import { signup } from "../api/members/signup";
 
 export function useSignupMutation() {
-  const navigate = useNavigate();
+  const router = useRouter();
 
   return useMutation({
     // 회원가입 API 요청 함수
@@ -14,7 +16,7 @@ export function useSignupMutation() {
       alert(response.message);
 
       // 회원가입 성공 후 로그인 페이지로 이동
-      navigate({ to: "/login" });
+      router.push("/login");
     },
 
     // 회원가입 실패 시 실행

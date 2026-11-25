@@ -1,4 +1,7 @@
-import { Link, useNavigate, useSearch } from "@tanstack/react-router";
+"use client";
+
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState, type SubmitEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 
@@ -14,19 +17,24 @@ import { BookmarkButton } from "../../components/bookmark-button";
 import { getSearchErrorMessage } from "../../utils/movies/get-search-error-message";
 
 export function SearchPage() {
-  // URL의 query search param 가져오기
-  const { query } = useSearch({ from: "/search" });
+  // Next.js의 useSearchParams로 URL의 검색어 가져오기
+  const searchParams = useSearchParams();
+  const query = searchParams.get("query") ?? "";
 
+  // URL의 검색어가 변경되면 검색창 상태도 초기화
+  return <SearchPageContent key={query} query={query} />;
+}
+
+function SearchPageContent({ query }: { query: string }) {
   // 검색 버튼을 누르면 URL을 변경하기 위해 사용
-  const navigate = useNavigate({ from: "/search" });
+  const router = useRouter();
 
   // 검색창에 입력한 문자열 관리
-  const [searchText, setSearchText] = useState(query ?? "");
+  const [searchText, setSearchText] = useState(query);
 
   // 검색어 앞뒤 공백 제거
-  // 기존에는 toLowerCase()도 사용했지만,
-  // 이제 검색은 TMDB 서버가 처리하므로 소문자로 변환할 필요 없음
-  const normalizedQuery = query?.trim() ?? "";
+  // 검색은 TMDB 서버가 처리하므로 소문자로 변환할 필요 없음
+  const normalizedQuery = query.trim();
 
   // 공통 Query 설정을 사용해 검색 결과 요청 및 상태 관리
   const searchQuery = useQuery(movieQueries.search(normalizedQuery));
@@ -41,10 +49,15 @@ export function SearchPage() {
 
     const nextQuery = searchText.trim();
 
-    // navigate()가 URL을 /search?query=검색어 형태로 변경
-    navigate({
-      search: nextQuery ? { query: nextQuery } : {},
-    });
+    // URLSearchParams를 사용해 검색어를 안전하게 URL로 변환
+    const params = new URLSearchParams();
+
+    if (nextQuery) {
+      params.set("query", nextQuery);
+    }
+
+    // router.push()로 URL을 /search?query=검색어 형태로 변경
+    router.push(nextQuery ? `/search?${params.toString()}` : "/search");
   }
 
   return (
@@ -156,18 +169,15 @@ export function SearchPage() {
                               {movie.overview}
                             </p>
 
-                            {/* 기존 영화 상세 페이지 이동 기능 유지 */}
+                            {/* Next.js Link로 영화 상세 페이지 이동 */}
                             <Link
                               className="mt-3 inline-block text-sm font-semibold text-blue-600"
-                              to="/movies/$movieId"
-                              params={{
-                                movieId: String(movie.id),
-                              }}
+                              href={`/movies/${movie.id}`}
                             >
                               상세 보기
                             </Link>
 
-                            {/* 기존 Zustand 북마크 기능 유지 */}
+                            {/* 기존 북마크 기능 유지 */}
                             <div className="mt-3">
                               <BookmarkButton
                                 movieId={movie.id}

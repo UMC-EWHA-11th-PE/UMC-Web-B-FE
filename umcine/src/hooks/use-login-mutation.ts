@@ -1,11 +1,13 @@
+"use client";
+
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
+import { useRouter } from "next/navigation";
 import { login } from "../api/auth/login";
 import { useAuthStore } from "../stores/auth-store";
 
 // 로그인 요청과 성공/실패 처리를 관리하는 커스텀 훅
 export function useLoginMutation() {
-  const navigate = useNavigate();
+  const router = useRouter();
   const queryClient = useQueryClient();
   const setAccessToken = useAuthStore((state) => state.setAccessToken);
 
@@ -24,7 +26,7 @@ export function useLoginMutation() {
       });
 
       // 3. 로그인 성공 후 메인 페이지로 이동
-      await navigate({ to: "/" });
+      router.replace("/");
     },
 
     // 로그인 실패 시 실행

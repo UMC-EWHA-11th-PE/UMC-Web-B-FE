@@ -1,4 +1,6 @@
-import { Link } from "@tanstack/react-router";
+"use client";
+
+import Link from "next/link";
 import { useQuery, useQueries } from "@tanstack/react-query";
 import { getMe } from "../../api/members/me";
 import { useAuthStore } from "../../stores/auth-store";
@@ -87,7 +89,7 @@ export function MyPage() {
 
           {/* 내 정보 수정 페이지로 이동 */}
           <Link
-            to="/my-info"
+            href="/my-info"
             className="rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white no-underline hover:bg-blue-700"
           >
             내 정보 수정
@@ -134,7 +136,7 @@ export function MyPage() {
               </p>
 
               <Link
-                to="/"
+                href="/"
                 className="mt-4 inline-block text-sm font-semibold text-blue-600"
               >
                 영화 둘러보기
@@ -180,10 +182,9 @@ export function MyPage() {
                     key={movie.id}
                     className="relative overflow-hidden rounded-lg bg-white shadow-sm"
                   >
-                    {/* 영화 상세 페이지로 이동 */}
+                    {/* Next.js Link로 영화 상세 페이지 이동 */}
                     <Link
-                      to="/movies/$movieId"
-                      params={{ movieId: String(movie.id) }}
+                      href={`/movies/${movie.id}`}
                       className="block text-gray-900 no-underline"
                     >
                       {posterUrl ? (
